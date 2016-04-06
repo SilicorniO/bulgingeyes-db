@@ -1,1 +1,1 @@
-include ':app', ':bulgingeyesdblib'
+include ':example', ':bulgingeyesdblib', ':googlyeyes-db-and'
