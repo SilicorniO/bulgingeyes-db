@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.silicornio.googlyeyes.db">
+    package="com.silicornio.googlyeyes.dband">
 
     <application
         android:allowBackup="true"

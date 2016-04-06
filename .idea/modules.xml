@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/bulgingeyesdblib/bulgingeyesdblib.iml" filepath="$PROJECT_DIR$/bulgingeyesdblib/bulgingeyesdblib.iml" />
       <module fileurl="file://$PROJECT_DIR$/db_android_trunk.iml" filepath="$PROJECT_DIR$/db_android_trunk.iml" />
       <module fileurl="file://$PROJECT_DIR$/example/example.iml" filepath="$PROJECT_DIR$/example/example.iml" />
       <module fileurl="file://$PROJECT_DIR$/googlyeyes-db-and/googlyeyes-db-and.iml" filepath="$PROJECT_DIR$/googlyeyes-db-and/googlyeyes-db-and.iml" />
