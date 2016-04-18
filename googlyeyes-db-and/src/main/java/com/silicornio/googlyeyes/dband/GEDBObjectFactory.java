@@ -1,0 +1,366 @@
+package com.silicornio.googlyeyes.dband;
+
+import android.util.Pair;
+
+import com.google.gson.Gson;
+import com.silicornio.googlyeyes.dband.dbrequest.GERequestFactory;
+import com.silicornio.googlyeyes.dband.dbrequest.GERequest;
+import com.silicornio.googlyeyes.dband.dbrequest.GERequestOperator;
+import com.silicornio.googlyeyes.dband.dbrequest.GEResponse;
+import com.silicornio.googlyeyes.dband.general.GEL;
+import com.silicornio.googlyeyes.dband.general.GEReflectionUtils;
+import com.silicornio.googlyeyes.dband.model.GEModelFactory;
+import com.silicornio.googlyeyes.dband.model.GEModelObject;
+import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @author Silicornio
+ * Layer to work directly with objects.
+ * NOTE: Model names have to be setted with the same name than the object
+ */
+public class GEDBObjectFactory {
+
+    //----- GET -----
+
+    /**
+     * Get the unique object of a table (if there is more than one, the first one)
+     * @param dbController DbController to read model and execute queries
+     * @param objectClass  Class of the object to find in the model (same name)
+     * @return T Object gotten from database or null if there was an error
+     */
+    public static <T>T getUniqueObject(GEDBController dbController, Class<T> objectClass){
+
+        GEModelObject modelObject = GEModelFactory.findObject(objectClass.getSimpleName(), dbController.getModelConf().objects);
+        if(modelObject!=null) {
+            GERequest request = new GERequest(GERequest.TYPE_GET, modelObject.name);
+            request.operators.add(new GERequestOperator(null, GERequestOperator.SYMBOL_LIMIT, "1"));
+            GEResponse response = dbController.request(request);
+            return getOneObjectResponse(response, modelObject, objectClass);
+        }else{
+            return null;
+        }
+
+    }
+
+    /**
+     * Get the object with the identifier received
+     * @param dbController DbController to read model and execute queries
+     * @param objectClass  Class of the object to find in the model (same name)
+     * @param sId String identifier
+     * @return T Object gotten from database or null if there was an error
+     */
+    public static <T>T getOneObject(GEDBController dbController, Class<T> objectClass, String sId){
+
+        if(dbController==null){
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
+        Pair<GEModelObject, GEModelObjectAttribute> modelAndId = GERequestFactory.getModelAndId(dbController, objectClass);
+        if(modelAndId!=null) {
+            GEResponse response = dbController.request(GERequestFactory.getObjects(
+                    modelAndId.first.name,
+                    new String[]{modelAndId.second.name},
+                    new String[]{sId},
+                    dbController.getModelConf().objects));
+            return getOneObjectResponse(response, modelAndId.first, objectClass);
+        }else{
+            return null;
+        }
+
+    }
+
+    /**
+     * Get all the objects of the type received
+     * @param dbController DbController to read model and execute queries
+     * @param objectClass  Class of the object to find in the model (same name)
+     * @return List<T> list of objects found or empty array
+     */
+    public static <T>List<T> getAllObjects(GEDBController dbController, Class<T> objectClass){
+        return getObjects(dbController, objectClass, new String[]{}, new String[]{});
+    }
+
+    /**
+     * Get the list of objects with the values given
+     * @param dbController DbController to read model and execute queries
+     * @param objectClass  Class of the object to find in the model (same name)
+     * @param attrNames String[] with array of names of parameters to compare
+     * @param attrValues String[] with array of values for parameters given
+     * @return List<T> list of objects found or empty array
+     */
+    public static <T>List<T> getObjects(GEDBController dbController, Class<T> objectClass, String[] attrNames, String[] attrValues){
+
+        if(dbController==null){
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
+        GEModelObject modelObject = GEModelFactory.findObject(objectClass.getSimpleName(), dbController.getModelConf().objects);
+        if(modelObject!=null) {
+            GEResponse response = dbController.request(GERequestFactory.getObjects(
+                    modelObject.name,
+                    attrNames,
+                    attrValues,
+                    dbController.getModelConf().objects));
+            return getObjectsResponse(response, modelObject, objectClass);
+        }else{
+            return null;
+        }
+    }
+
+    //----- ADD -----
+
+    /**
+     * Add an object
+     * @param dbController DbController to read model and execute queries
+     * @param object Object to add
+     * @return Object inserted or null if there was an error
+     */
+    public static <T>T addObject(GEDBController dbController, T object){
+
+        if(dbController==null || object==null){
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
+        GEResponse response = dbController.request(GERequestFactory.addObject(object.getClass().getSimpleName(), object, dbController.getModelConf().objects));
+        return getOneObjectResponse(response, GEModelFactory.findObject(object.getClass().getSimpleName(), dbController.getModelConf().objects), (Class<T>) object.getClass());
+    }
+
+    //----- UPDATE -----
+
+    /**
+     * Add unique object. Try to update the object and create it if not exist
+     * @param dbController DbController to read model and execute queries
+     * @param object Object to add
+     * @return Object inserted or null if there was an error
+     */
+    public static <T>T updateUniqueObject(GEDBController dbController, T object){
+
+        if(dbController==null || object==null){
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
+        GEResponse response = dbController.request(GERequestFactory.updateObjects(
+                object.getClass().getSimpleName(),
+                object,
+                new String[]{},
+                new String[]{},
+                dbController.getModelConf().objects));
+        if(response.numResults==0) {
+            response = dbController.request(GERequestFactory.addObject(object.getClass().getSimpleName(), object, dbController.getModelConf().objects));
+        }
+        return getOneObjectResponse(response, GEModelFactory.findObject(object.getClass().getSimpleName(), dbController.getModelConf().objects), (Class<T>) object.getClass());
+    }
+
+    /**
+     * Update the object with the identifier received
+     * @param dbController DbController to read model and execute queries
+     * @param object  Object to update
+     * @return boolean TRUE if updated one or more elements, FALSE if error or not deleted any element
+     */
+    public static <T>T updateObject(GEDBController dbController, T object){
+
+        if(dbController==null){
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
+        Pair<GEModelObject, GEModelObjectAttribute> modelAndId = GERequestFactory.getModelAndId(dbController, object.getClass());
+        if(modelAndId!=null) {
+            Object value = GEReflectionUtils.getReflectionValue(object, modelAndId.second.name);
+            if(value!=null) {
+                GEResponse response = dbController.request(GERequestFactory.updateObjects(
+                        modelAndId.first.name,
+                        object,
+                        new String[]{modelAndId.second.name},
+                        new String[]{String.valueOf(value)},
+                        dbController.getModelConf().objects));
+                return getOneObjectResponse(response, modelAndId.first, (Class<T>) object.getClass());
+            }else{
+                return null;
+            }
+        }else{
+            return null;
+        }
+
+    }
+
+
+    //----- DELETE -----
+
+    /**
+     * Delete the object with the identifier received
+     * @param dbController DbController to read model and execute queries
+     * @param objectClass  Class of the object to find in the model (same name)
+     * @param sId String identifier
+     * @return boolean TRUE if deleted one or more elements, FALSE if error or not deleted any element
+     */
+    public static boolean deleteObject(GEDBController dbController, Class objectClass, String sId){
+
+        if(dbController==null){
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
+        Pair<GEModelObject, GEModelObjectAttribute> modelAndId = GERequestFactory.getModelAndId(dbController, objectClass);
+        if(modelAndId!=null) {
+            GEResponse response = dbController.request(
+                    GERequestFactory.deleteObjects(modelAndId.first.name,
+                            new String[]{modelAndId.second.name},
+                            new String[]{sId},
+                            dbController.getModelConf().objects));
+            return response.numResults>0;
+        }else{
+            return false;
+        }
+
+    }
+
+    /**
+     * Delete the object with the identifier received
+     * @param dbController DbController to read model and execute queries
+     * @param objectClass  Class of the object to find in the model (same name)
+     * @param attrNames String[] with array of names of parameters to compare
+     * @param attrValues String[] with array of values for parameters given
+     * @return boolean TRUE if deleted one or more elements, FALSE if error or not deleted any element
+     */
+    public static boolean deleteObjects(GEDBController dbController, Class objectClass, String[] attrNames, String[] attrValues){
+
+        if(dbController==null){
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
+        Pair<GEModelObject, GEModelObjectAttribute> modelAndId = GERequestFactory.getModelAndId(dbController, objectClass);
+        if(modelAndId!=null) {
+            GEResponse response = dbController.request(GERequestFactory.deleteObjects(modelAndId.first.name, attrNames, attrValues, dbController.getModelConf().objects));
+            return response.numResults>0;
+        }else{
+            return false;
+        }
+
+    }
+
+    //----- REQUESTS -----
+
+    /**
+     * Get objects with the request received
+     * @param dbController DbController to read model and execute queries
+     * @param dbRequest DBRequest to execute
+     * @param objectClass  Class of the object to find in the model (same name)
+     * @return boolean TRUE if deleted one or more elements, FALSE if error or not deleted any element
+     */
+    public static <T>List<T> executeRequestListResponse(GEDBController dbController, GERequest dbRequest, Class<T> objectClass){
+
+        if(dbController==null || dbRequest==null || objectClass==null){
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
+        //get the model that will be used to convert the response to an object
+        GEModelObject modelObject = GEModelFactory.findObject(dbRequest.modelObject, dbController.getModelConf().objects);
+        if(modelObject==null){
+            GEL.e("Model '" + dbRequest.modelObject + "' not found in the list of models");
+            return null;
+        }
+
+        //execute the request
+        GEResponse response = dbController.request(dbRequest);
+        return getObjectsResponse(response, modelObject, objectClass);
+    }
+
+    /**
+     * Get objects with the request received
+     * @param dbController DbController to read model and execute queries
+     * @param dbRequest DBRequest to execute
+     * @param objectClass  Class of the object to find in the model (same name)
+     * @return boolean TRUE if deleted one or more elements, FALSE if error or not deleted any element
+     */
+    public static <T>T executeRequestOneResponse(GEDBController dbController, GERequest dbRequest, Class<T> objectClass){
+
+        if(dbController==null || dbRequest==null || objectClass==null){
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
+        //get the model that will be used to convert the response to an object
+        GEModelObject modelObject = GEModelFactory.findObject(dbRequest.modelObject, dbController.getModelConf().objects);
+        if(modelObject==null){
+            GEL.e("Model '" + dbRequest.modelObject + "' not found in the list of models");
+            return null;
+        }
+
+        //execute the request
+        GEResponse response = dbController.request(dbRequest);
+        return getOneObjectResponse(response, modelObject, objectClass);
+    }
+
+    //----- UTILS -----
+
+    /**
+     * Convert the response received in an object
+     * @param response DBResponse to read
+     * @param modelObject ModelObject reference
+     * @param objectClass Class to use for convert to an object
+     * @return Object translated or null if there was an error
+     */
+    public static <T>T getOneObjectResponse(GEResponse response, GEModelObject modelObject, Class<T> objectClass){
+
+        //Prepare Gson to write and read JSON
+        Gson gson = new Gson();
+
+        //convert the response to an object
+        Map<String, Object> result;
+        if(response.numResults==1) {
+            result = response.result;
+        }else if(response.numResults>1) {
+            result = response.results.get(0);
+        }else {
+            return null;
+        }
+
+        //check if the model has a JSON attribute to return it
+        GEModelObjectAttribute attrObjectJson = GEModelFactory.findAttributeObjectJson(modelObject);
+        if(attrObjectJson!=null){
+            return gson.fromJson((String)result.get(attrObjectJson.name), objectClass);
+        }else {
+            return gson.fromJson(gson.toJson(result), objectClass);
+        }
+    }
+
+    /**
+     * Convert the response received in a list of objects
+     * @param response DBResponse to read
+     * @param modelObject ModelObject reference
+     * @param objectClass Class to use for convert to an object
+     * @return List<T> List of objects or null if there was an error
+     */
+    public static <T>List<T> getObjectsResponse(GEResponse response, GEModelObject modelObject, Class<T> objectClass){
+
+        //Prepare Gson to write and read JSON
+        Gson gson = new Gson();
+
+        //convert the response to an object
+        List<Map<String, Object>> results = new ArrayList<>();
+        if(response.numResults==1) {
+            results.add(response.result);
+        }else if(response.numResults>1) {
+            results.addAll(response.results);
+        }else {
+            return null;
+        }
+
+        //check if the model has a JSON attribute to return it
+        GEModelObjectAttribute attrObjectJson = GEModelFactory.findAttributeObjectJson(modelObject);
+
+        //generate the list of objects
+        List<T> listResults = new ArrayList<>();
+        for(Map<String, Object> result : results){
+            if(attrObjectJson!=null){
+                listResults.add(gson.fromJson((String)result.get(attrObjectJson.name), objectClass));
+            }else{
+                listResults.add(gson.fromJson(gson.toJson(result), objectClass));
+            }
+        }
+        return listResults;
+    }
+
+
+}

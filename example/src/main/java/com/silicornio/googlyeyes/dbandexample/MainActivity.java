@@ -3,13 +3,14 @@ package com.silicornio.googlyeyes.dbandexample;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
-import com.silicornio.googlyeyes.dband.DBRequest.DBFactoryRequest;
-import com.silicornio.googlyeyes.dband.DbController;
-import com.silicornio.googlyeyes.dband.DbFactory;
-import com.silicornio.googlyeyes.dband.Setting;
-import com.silicornio.googlyeyes.dband.db.DbConf;
+import com.silicornio.googlyeyes.dband.GEDBController;
+import com.silicornio.googlyeyes.dband.GEDBObjectFactory;
+import com.silicornio.googlyeyes.dband.db.GEDbConf;
+import com.silicornio.googlyeyes.dband.general.GEDBUtils;
 import com.silicornio.googlyeyes.dband.general.GEL;
-import com.silicornio.googlyeyes.dband.model.ModelConf;
+import com.silicornio.googlyeyes.dband.model.GEModelConf;
+import com.silicornio.googlyeyes.dbandexample.model.GEMessage;
+import com.silicornio.googlyeyes.dbandexample.model.GEMessageText;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -25,26 +26,34 @@ public class MainActivity extends AppCompatActivity {
 
         GEL.showLogs = true;
 
-        DbConf dbConf = DbFactory.readConfObjectFromAssets(this, "jedb/db.conf", DbConf.class);
-        ModelConf modelConf = DbFactory.readConfObjectFromAssets(this, "jedb/model.conf", ModelConf.class);
+        GEDbConf dbConf = GEDBUtils.readConfObjectFromAssets(this, "jedb/db.conf", GEDbConf.class);
+        GEModelConf modelConf = GEDBUtils.readConfObjectFromAssets(this, "jedb/model.conf", GEModelConf.class);
 
-        DbController dbController = new DbController(dbConf, modelConf);
+        deleteDatabase(dbConf.name);
+
+        GEDBController dbController = new GEDBController(dbConf, modelConf);
         dbController.connectDb(this);
 
-        Setting settingAdd = new Setting();
-        settingAdd.setName("name8");
-        settingAdd.setValue("value8_1");
-        settingAdd.setValue2("value8_1_2");
-        DBFactoryRequest.addObject(dbController, settingAdd);
+        //generate objects to use in tests
+        GEMessageText messageText = new GEMessageText("text of title1");
+        GEMessage message = new GEMessage("title1", messageText);
 
-        Setting setting = DBFactoryRequest.getOneObject(dbController, Setting.class, "name8");
-        if(setting!=null) {
-            GEL.i(setting.toString());
+        //add object
+        GEMessage messageAdd = GEDBObjectFactory.addObject(dbController, message);
+        GEL.i("ADD: " + messageAdd.toString());
 
-            DBFactoryRequest.deleteObject(dbController, Setting.class, "name8");
+        //get the object
+        GEMessage messageGet = GEDBObjectFactory.getOneObject(dbController, GEMessage.class, "1");
+        if(messageGet!=null) {
+
+            //show the
+            GEL.i("GET: " + messageGet.toString());
+
+            //remove the object
+            GEDBObjectFactory.deleteObject(dbController, GEMessage.class, "title1");
 
         }else{
-            GEL.i("no setting");
+            GEL.i("No message");
         }
 
         dbController.disonnectDb();

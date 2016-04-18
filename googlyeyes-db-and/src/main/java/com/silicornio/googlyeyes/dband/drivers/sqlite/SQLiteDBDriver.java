@@ -4,15 +4,15 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.silicornio.googlyeyes.dband.DBRequest.DBRequest;
-import com.silicornio.googlyeyes.dband.DBRequest.DBRequestOperator;
-import com.silicornio.googlyeyes.dband.DBRequest.DBResponse;
-import com.silicornio.googlyeyes.dband.db.DbConf;
+import com.silicornio.googlyeyes.dband.dbrequest.GERequest;
+import com.silicornio.googlyeyes.dband.dbrequest.GERequestOperator;
+import com.silicornio.googlyeyes.dband.dbrequest.GEResponse;
+import com.silicornio.googlyeyes.dband.db.GEDbConf;
 import com.silicornio.googlyeyes.dband.drivers.DBDriver;
 import com.silicornio.googlyeyes.dband.general.GEL;
-import com.silicornio.googlyeyes.dband.model.ModelFactory;
-import com.silicornio.googlyeyes.dband.model.ModelObject;
-import com.silicornio.googlyeyes.dband.model.ModelObjectAttribute;
+import com.silicornio.googlyeyes.dband.model.GEModelFactory;
+import com.silicornio.googlyeyes.dband.model.GEModelObject;
+import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,7 +30,7 @@ public class SQLiteDBDriver implements DBDriver {
 	private SQLiteDatabase mDb = null;
 	
 	/** Model objects **/
-	private ModelObject[] mModels;
+	private GEModelObject[] mModels;
 
 	/** Database helper **/
 	private JESQLiteOpenHelper mDbHelper;
@@ -38,14 +38,14 @@ public class SQLiteDBDriver implements DBDriver {
 	//------------------- INITIALIZE --------------------
 	
 	@Override
-	public void init(ModelObject[] allModels) {
+	public void init(GEModelObject[] allModels) {
 		mModels = allModels;		
 	}	
 	
 	//-------------------- CONNECTION --------------------
 	
 	@Override
-	public boolean connect(Context context, DbConf dbConf) {
+	public boolean connect(Context context, GEDbConf dbConf) {
 
 		//initialize the helper
 		mDbHelper = new JESQLiteOpenHelper(context, this, dbConf.name, 1);
@@ -62,7 +62,7 @@ public class SQLiteDBDriver implements DBDriver {
 		try {
 			mDb.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+            GEL.e("Exception closing connection with database: " + e.toString());
 		}
 	}
 
@@ -70,7 +70,7 @@ public class SQLiteDBDriver implements DBDriver {
 	//--------------------- MODEL ----------------------
 	
 	@Override
-	public boolean modelExists(ModelObject model) {
+	public boolean modelExists(GEModelObject model) {
 		
 		try{
             String sStTable = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + model.name + "'";
@@ -88,7 +88,7 @@ public class SQLiteDBDriver implements DBDriver {
 	}
 	
 	@Override
-	public void createModel(ModelObject model) {
+	public void createModel(GEModelObject model) {
 		
 		try{
 			String sStatement = SQLiteDBStGenerator.statementCreate(model, mModels);
@@ -105,7 +105,7 @@ public class SQLiteDBDriver implements DBDriver {
 	}
 
 	@Override
-	public boolean updateModel(final ModelObject model) {
+	public boolean updateModel(final GEModelObject model) {
 		
 		try{
 		
@@ -132,15 +132,15 @@ public class SQLiteDBDriver implements DBDriver {
                             //clean type
                             attrType = attrType.replace("AUTO_INCREMENT", "").trim();
 
-							//get attribute with that name
-							ModelObjectAttribute attr = ModelFactory.findAttribute(attrName, model);
+							//get model and attribute with id
+							GEModelObjectAttribute attr = GEModelFactory.findAttribute(attrName, model);
 							if (attr != null) {
 
                                 //get the type of the attribute for the model
                                 String attrTypeModel = SQLiteDBStGenerator.statementType(attr.type, attr.length);
                                 if(attrTypeModel==null){
                                     //search the type because it can be a reference
-                                    ModelObjectAttribute attrRef = ModelFactory.findAttribute(attr.type, mModels);
+                                    GEModelObjectAttribute attrRef = GEModelFactory.findAttributeId(attr.type, mModels);
                                     if(attrRef!=null){
                                         attrTypeModel = SQLiteDBStGenerator.statementType(attrRef.type, attrRef.length);
                                     }else{
@@ -166,7 +166,7 @@ public class SQLiteDBDriver implements DBDriver {
 
 						//add attributes not in database
 						if (num > 0) {
-							for (ModelObjectAttribute attr : model.attributes) {
+							for (GEModelObjectAttribute attr : model.attributes) {
 								if (!attrNames.contains(attr.name)) {
 									String sStatement = "ALTER TABLE " + model.name + " ADD " + attr.name + " " + SQLiteDBStGenerator.statementColumn(attr, mModels);
 
@@ -182,7 +182,7 @@ public class SQLiteDBDriver implements DBDriver {
 						}
 
 					} catch (Exception e) {
-						e.printStackTrace();
+                        GEL.e("Exception updating model: " + e.toString());
 					}
 
 					return num > 0;
@@ -196,7 +196,7 @@ public class SQLiteDBDriver implements DBDriver {
 	}
 
 	@Override
-	public void deleteModel(ModelObject model) {
+	public void deleteModel(GEModelObject model) {
 		try{
 			String sStatement = SQLiteDBStGenerator.statementDrop(model);
 			if(!SQLiteDBExecutor.executeStatementSimple(mDb, sStatement)){
@@ -212,19 +212,19 @@ public class SQLiteDBDriver implements DBDriver {
 	//---------------- REQUEST -----------------------------------
 	
 	@Override
-	public DBResponse request(DBRequest request) {
+	public GEResponse request(GERequest request) {
 		
 		//check the type of request to execute
-		DBResponse response = null;
-		if(request.type==null || request.type.equals(DBRequest.TYPE_RAW)){
+		GEResponse response = null;
+		if(request.type==null || request.type.equals(GERequest.TYPE_RAW)){
 			response = executeRaw(request);
-		}else if(request.type.equals(DBRequest.TYPE_GET)){
+		}else if(request.type.equals(GERequest.TYPE_GET)){
 			response = executeSelect(request);
-		}else if(request.type.equals(DBRequest.TYPE_ADD)){
+		}else if(request.type.equals(GERequest.TYPE_ADD)){
 			response = executeInsert(request);
-		}else if(request.type.equals(DBRequest.TYPE_UPDATE)){
+		}else if(request.type.equals(GERequest.TYPE_UPDATE)){
 			response = executeUpdate(request);
-		}else if(request.type.equals(DBRequest.TYPE_DELETE)){
+		}else if(request.type.equals(GERequest.TYPE_DELETE)){
 			response = executeDelete(request);
 		}
 		
@@ -243,15 +243,23 @@ public class SQLiteDBDriver implements DBDriver {
 	 * @param request DBRequest with information to generate the statement
 	 * @return DBResponse with the result to convert to JSON
 	 */
-	private DBResponse executeSelect(final DBRequest request){
+	private GEResponse executeSelect(final GERequest request){
 		
 		try{
-		
+
+            //get the models to use (used to generate a query with all nested objects)
+            List modelsList = findNestedObjecs(request.modelObject, mModels, request.nestedObjects);
+            final SQLiteDBModelObject[] models = (SQLiteDBModelObject[])modelsList.toArray(new SQLiteDBModelObject[modelsList.size()]);
+            if(models.length==0){
+                GEL.e("Trying to do a request with model '" + request.modelObject + "' that not exist");
+                return null;
+            }
+
 			//generate the statement for select
-			String sStatement = SQLiteDBStGenerator.statementSelect(request);
+			String sStatement = SQLiteDBStGenerator.statementSelect(request, models);
 			
 			//create the response to return
-			final DBResponse response = new DBResponse();
+			final GEResponse response = new GEResponse();
 			SQLiteDBExecutor.executeQueryStatement(mDb, sStatement, new SQLiteDBExecutor.StatementListener() {
 
 				@Override
@@ -261,39 +269,150 @@ public class SQLiteDBDriver implements DBDriver {
 						while (cursor.moveToNext()) {
 							response.numResults++;
 
-							//convert row to a HashMap
-							response.results.add(rowToHashMap(cursor));
+                            if((request.responseAttributes==null || request.responseAttributes.size()==0) && request.nestedObjects && models.length>1) {
+
+                                //convert row to a HashMap of each object
+                                Map<String, Object>[] maps = new Map[models.length];
+                                int numColumnsRead = 0;
+                                for (int i=0; i<models.length; i++) {
+                                    maps[i] = rowToMap(cursor, numColumnsRead, numColumnsRead + models[i].attributes.length);
+                                    numColumnsRead += models[i].attributes.length;
+                                }
+
+                                response.results.add(joinMapModels(0, maps, models));
+
+                            }else{
+                                response.results.add(rowToMap(cursor, 0, cursor.getColumnCount()));
+                            }
 						}
 
 						//change from the list to the object if there is only one
 						response.clean();
 
 					} catch (Exception e) {
-						e.printStackTrace();
-						GEL.e("ERROR converting query result to response");
+						GEL.e("ERROR converting query result to response: " + e.toString());
 						return false;
 					}
 
 					return true;
 				}
 			});
-			
+
 			return response;
 			
 		}catch(SQLiteDBException mdbe){
-			return DBResponse.generateErrorDB(mdbe.toString());
+			return GEResponse.generateErrorDB(mdbe.toString());
 		}
 	}
+
+    /**
+     * Find the object and all nested objects of that object
+     * @param nameObject String name of the modelObject where to search nested objects
+     * @param models ModelObject[] array of models where to search when one is found
+	 * @param nestedObjects boolean TRUE for searching inside of the children or false to return the first one
+     * @return SQLiteDBModelObject[] list of nested objects including the search one or empty list if not found
+     */
+    private static List<SQLiteDBModelObject> findNestedObjecs(String nameObject, GEModelObject[] models, boolean nestedObjects){
+
+        //list to return
+        List<SQLiteDBModelObject> objects = new ArrayList<>();
+
+        //search the object with the name received
+        GEModelObject mo = GEModelFactory.findObject(nameObject, models);
+        if(mo!=null) {
+
+            //add the model creating a new one without attributes
+            SQLiteDBModelObject moCopy = new SQLiteDBModelObject(mo);
+            objects.add(moCopy);
+
+            //search in all attributes for nested objects
+			if(nestedObjects) {
+				List<GEModelObjectAttribute> attrs = new ArrayList<>();
+				for (GEModelObjectAttribute moa : mo.attributes) {
+
+					//if it is an object we search the object and nested objects, adding all to the list
+					if (moa.isObjectType()) {
+
+						//add the attribute to the list of the model
+						attrs.add(moa);
+
+						//find nested objects of that one
+						objects.addAll(findNestedObjecs(moa.type, models, nestedObjects));
+					}
+				}
+
+				//set the attributes to the model copy
+				moCopy.attributesObject = attrs.toArray(new GEModelObjectAttribute[attrs.size()]);
+			}
+        }
+
+        //return the list
+        return objects;
+    }
+
+    /**
+     * Join a group of maps in one using the models received
+     * @param index int index to know the map reading (recursive)
+     * @param maps Map<String, Object> array of maps referred to each model
+     * @param models SQLiteDBModelObject[] array of models
+     * @return Map<String, Object> with nested maps if necessary
+     */
+    private Map<String, Object> joinMapModels(int index, Map<String, Object>[] maps, SQLiteDBModelObject[] models){
+
+        //get the first map
+        Map<String, Object> map = maps[index];
+
+        //for each attribute with object add the map associated
+        for(GEModelObjectAttribute attr : models[index].attributesObject){
+            for(int i=0; i<models.length; i++){
+                if(models[i].name.equalsIgnoreCase(attr.type)){
+                    map.put(attr.name, joinMapModels(i, maps, models));
+                    break;
+                }
+            }
+        }
+
+        //return the map
+        return map;
+    }
 	
 	/**
 	 * Generate and execute an insert with the request received
 	 * @param request DBRequest with information to generate the statement
 	 * @return DBResponse with the result to convert to JSON
 	 */
-	private DBResponse executeInsert(DBRequest request){
-		
+	private GEResponse executeInsert(GERequest request){
+
+		//get the model object
+		GEModelObject modelObject = GEModelFactory.findObject(request.modelObject, mModels);
+		if(modelObject==null){
+			GEL.e("Trying to execute insert request with model '" + request.modelObject + "' that not exist");
+			return null;
+		}
+
+        //check attributes with references to other models to add them before adding this one
+        for(GEModelObjectAttribute moa : modelObject.attributes){
+            if(moa.isObjectType() && request.value.get(moa.name)!=null && request.value.get(moa.name) instanceof Map){
+
+                //get the model reference
+                GEModelObjectAttribute moaRef = GEModelFactory.findAttributeId(moa.type, mModels);
+                if(moaRef!=null) {
+
+                    //generate a request for this attribute and execute the insert
+                    GERequest requestRef = new GERequest(GERequest.TYPE_ADD, moa.type);
+                    requestRef.value = (Map)request.value.get(moa.name);
+                    GEResponse responseRef = executeInsert(requestRef);
+
+                    //get the identifier of the response and set it to the value
+                    if(responseRef!=null && responseRef.numResults==1){
+                        request.value.put(moa.name, responseRef.result.get(moaRef.name));
+                    }
+                }
+            }
+        }
+
 		//generate the statement for select
-		String sStatement = SQLiteDBStGenerator.statementInsert(request);
+		String sStatement = SQLiteDBStGenerator.statementInsert(request, modelObject, mModels);
 		
 		//execute the insert
 		try{
@@ -303,22 +422,22 @@ public class SQLiteDBDriver implements DBDriver {
 			}
 		
 			//get the model and look for the ID of the object to find it
-			ModelObject model = ModelFactory.findObject(request.modelObject, mModels);
+			GEModelObject model = GEModelFactory.findObject(request.modelObject, mModels);
 			if(model!=null){
 				
 				//generate the request to get the object
-				DBRequest idRequest = new DBRequest(DBRequest.TYPE_GET, model.name);
+				GERequest idRequest = new GERequest(GERequest.TYPE_GET, model.name);
 				idRequest.responseAttributes = request.responseAttributes;
 				
 				//add the operator, first we need to get the attribute with ID value
-				ModelObjectAttribute ma = ModelFactory.findAttributeId(model);
+				GEModelObjectAttribute ma = GEModelFactory.findAttributeId(model);
 				if(ma!=null){
 					if(ma.autoincrement){
-						idRequest.operators.add(new DBRequestOperator(ma.name, "=", String.valueOf(idGenerated)));
+						idRequest.operators.add(new GERequestOperator(ma.name, "=", String.valueOf(idGenerated)));
 					}else{
 						Object obj = request.value.get(ma.name);
 						if(obj!=null){
-							idRequest.operators.add(new DBRequestOperator(ma.name, "=", request.value.get(ma.name).toString()));
+							idRequest.operators.add(new GERequestOperator(ma.name, "=", request.value.get(ma.name).toString()));
                         } else {
                             GEL.e("Not possible to return the object for model '" + model.name + "'");
 							return null;
@@ -331,7 +450,7 @@ public class SQLiteDBDriver implements DBDriver {
 				
 			}
 		}catch(SQLiteDBException mdbe){
-			return DBResponse.generateErrorDB(mdbe.toString());
+			return GEResponse.generateErrorDB(mdbe.toString());
 		}
 		
 		return null;
@@ -342,7 +461,7 @@ public class SQLiteDBDriver implements DBDriver {
 	 * @param request DBRequest with information to generate the statement
 	 * @return DBResponse with the result to convert to JSON
 	 */
-	private DBResponse executeUpdate(DBRequest request){
+	private GEResponse executeUpdate(GERequest request){
 		
 		try{
 			//generate the statement for select
@@ -352,19 +471,19 @@ public class SQLiteDBDriver implements DBDriver {
 			SQLiteDBExecutor.executeStatementUpdateDelete(mDb, sStatement);
 			
 			//get the model and look for the ID of the object to find it
-			ModelObject model = ModelFactory.findObject(request.modelObject, mModels);
+			GEModelObject model = GEModelFactory.findObject(request.modelObject, mModels);
 			if(model!=null){
 				
 				//generate the request to get the values modified, changing actual to GET
-				DBRequest selectRequest = request.clone();
-				selectRequest.type = DBRequest.TYPE_GET;
+				GERequest selectRequest = request.clone();
+				selectRequest.type = GERequest.TYPE_GET;
 				
 				//execute the request
 				return executeSelect(selectRequest);				
 			}
 			
 		}catch(SQLiteDBException mdbe){
-			return DBResponse.generateErrorDB(mdbe.toString());
+			return GEResponse.generateErrorDB(mdbe.toString());
 		}
 		
 		return null;
@@ -375,7 +494,7 @@ public class SQLiteDBDriver implements DBDriver {
 	 * @param request DBRequest with information to generate the statement
 	 * @return DBResponse with the result to convert to JSON
 	 */
-	private DBResponse executeDelete(final DBRequest request){
+	private GEResponse executeDelete(final GERequest request){
 		
 		try{
 			//generate the statement for select
@@ -385,11 +504,11 @@ public class SQLiteDBDriver implements DBDriver {
 			SQLiteDBExecutor.executeStatementUpdateDelete(mDb, sStatement);
 
 		}catch(SQLiteDBException mdbe){
-			return DBResponse.generateErrorDB(mdbe.toString());
+			return GEResponse.generateErrorDB(mdbe.toString());
 		}
 		
 		//return empty because object was deleted
-		return new DBResponse();
+		return new GEResponse();
 	}
 	
 	/**
@@ -397,10 +516,10 @@ public class SQLiteDBDriver implements DBDriver {
 	 * @param request DBRequest with information to generate the statement
 	 * @return DBResponse with the result to convert to JSON
 	 */
-	private DBResponse executeRaw(final DBRequest request){
+	private GEResponse executeRaw(final GERequest request){
 		
 		//create the response to return
-		final DBResponse response = new DBResponse();
+		final GEResponse response = new GEResponse();
 		
 		try{
 			
@@ -415,15 +534,14 @@ public class SQLiteDBDriver implements DBDriver {
 							response.numResults++;
 
 							//convert row to a HashMap
-							response.results.add(rowToHashMap(cursor));
+							response.results.add(rowToMap(cursor, 0, cursor.getColumnCount()));
 						}
 
 						//change from the list to the object if there is only one
 						response.clean();
 
 					} catch (Exception e) {
-						e.printStackTrace();
-						GEL.e("ERROR converting query result to response");
+						GEL.e("ERROR converting query result to response: " + e.toString());
 						return false;
 					}
 
@@ -432,7 +550,7 @@ public class SQLiteDBDriver implements DBDriver {
 			});
 
 		}catch(SQLiteDBException mdbe){
-			return DBResponse.generateErrorDB(mdbe.toString());
+			return GEResponse.generateErrorDB(mdbe.toString());
 		}
 		
 		//return empty because object was deleted
@@ -443,12 +561,14 @@ public class SQLiteDBDriver implements DBDriver {
 	/**
 	 * Convert the Cursor given to a HashMap
 	 * @param cursor Cursor to read
+     * @param columnStart int index of column to start reading
+     * @param columnEnd int index of column to stop reading
 	 * @return HashMap<String, Object> map
 	 */
-	private static Map<String, Object> rowToHashMap(Cursor cursor){
+	private static Map<String, Object> rowToMap(Cursor cursor, int columnStart, int columnEnd){
 		Map<String, Object> map = new HashMap<>();
 		try{
-            for(int i=0; i<cursor.getColumnCount(); i++){
+            for(int i=columnStart; i<columnEnd && i<cursor.getColumnCount(); i++){
                 map.put(
                         cursor.getColumnName(i),
                         getCursorValue(cursor, i)
@@ -456,8 +576,7 @@ public class SQLiteDBDriver implements DBDriver {
             }
 
 		}catch(Exception e){
-			e.printStackTrace();
-			GEL.e("ERROR converting ResultSet to Map");
+			GEL.e("ERROR converting ResultSet to Map: " + e.toString());
 		}
 		return map;
 	}

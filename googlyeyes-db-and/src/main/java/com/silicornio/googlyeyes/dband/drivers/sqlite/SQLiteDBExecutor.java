@@ -22,7 +22,7 @@ public class SQLiteDBExecutor {
             return true;
 
         } catch (Exception e) {
-            e.printStackTrace();
+			GEL.e("Returning exception: " + e.toString());
             throw SQLiteDBException.create(e.toString());
         }
 	}
@@ -42,15 +42,15 @@ public class SQLiteDBExecutor {
             return (int)statement.executeInsert();
 
         } catch (Exception e) {
-            e.printStackTrace();
-            throw SQLiteDBException.create(e.toString());
+			GEL.e("Returning exception: " + e.toString());
+			throw SQLiteDBException.create(e.toString());
         } finally {
             if(statement!=null){
                 try {
                     statement.close();
                 } catch (Exception e) {
-                    e.printStackTrace();
-                }
+					GEL.e("Exception closing statement, not expected: " + e.toString());
+				}
             }
         }
 	}
@@ -72,14 +72,14 @@ public class SQLiteDBExecutor {
             return statement.executeUpdateDelete()>0;
 						
 		} catch (Exception e) {
-			e.printStackTrace();
+			GEL.e("Returning exception: " + e.toString());
 			throw SQLiteDBException.create(e.toString());
 		} finally {
 			if(statement!=null){
 				try {
 					statement.close();
 				} catch (Exception e) {
-					e.printStackTrace();
+					GEL.e("Exception closing statement, not expected: " + e.toString());
 				}
 			}
 		}
@@ -105,7 +105,7 @@ public class SQLiteDBExecutor {
 			}
 						
 		} catch (Exception e) {
-			e.printStackTrace();
+			GEL.e("Returning exception: " + e.toString());
 			throw SQLiteDBException.create(e.toString());
 		}
 		

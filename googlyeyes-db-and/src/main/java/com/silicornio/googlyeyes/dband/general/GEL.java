@@ -20,7 +20,7 @@ public class GEL {
 	private static final String DATETIME_FORMAT = "HH:mm:ss.SSS";
 
 	/** Prefix to use for logs **/
-	private static final String PREFIX_LOG = "JE";
+	private static final String PREFIX_LOG = "GE";
 
 	/** Flag to show logs or not. Default to false. Set true from code using compiler constants **/
 	public static boolean showLogs = false;
