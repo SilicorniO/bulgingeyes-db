@@ -1,4 +1,4 @@
-# bulgingeyes-db
+# googlyeyes-db-and
 ORM Database for Android. Only SQLite connections are allowed at the moment. It uses two JSON files to configure the database and its connection.
 
 ## Features
@@ -20,7 +20,18 @@ In your `build.gradle` you should declare the jCenter repository into `repositor
 ```
 Include the library as dependency:
 ```gradle
-compile 'com.silicornio:googlyeyes-db-and:0.2.0'
+compile 'com.silicornio:googlyeyes-db-and:1.0.0'
+```
+
+### For Maven users
+
+```maven
+<dependency>
+  <groupId>com.silicornio</groupId>
+  <artifactId>googlyeyes-db-and</artifactId>
+  <version>1.0.0</version>
+  <type>pom</type>
+</dependency>
 ```
 
 ##Usage
