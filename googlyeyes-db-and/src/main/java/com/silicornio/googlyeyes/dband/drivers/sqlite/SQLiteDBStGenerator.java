@@ -8,6 +8,7 @@ import com.silicornio.googlyeyes.dband.model.GEModelFactory;
 import com.silicornio.googlyeyes.dband.model.GEModelObject;
 import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -79,7 +80,7 @@ public class SQLiteDBStGenerator {
 		String sStatement = "";
 						
 		//type
-		String sStatementType = statementType(attr.type, attr.length);
+		String sStatementType = statementType(attr.type, attr.format, attr.length);
 		if(sStatementType==null){
 			//find the type referred
 			GEModelObject modelRef = GEModelFactory.findObject(attr.type, models);
@@ -96,7 +97,7 @@ public class SQLiteDBStGenerator {
             }
 
 			//add the statement type
-			sStatementType = statementType(attrRef.type, attrRef.length);
+			sStatementType = statementType(attrRef.type, attrRef.format, attrRef.length);
 			if(sStatementType==null){
 				return null;
 			}
@@ -130,10 +131,11 @@ public class SQLiteDBStGenerator {
 	/**
 	 * Generate the type to set in the statement
 	 * @param type String type to set
+	 * @param format String to use if the type requires a format
 	 * @param length int of the variable
 	 * @return String with piece of statement to add or null 
 	 */
-	protected static String statementType(String type, int length){
+	protected static String statementType(String type, String format, int length){
 
 		if(type.equalsIgnoreCase(GEModelObjectAttribute.TYPE_STRING)){
 			if(length>0){
@@ -154,6 +156,14 @@ public class SQLiteDBStGenerator {
 			}else{
 				return "DOUBLE";
 			}
+
+		}else if(type.equalsIgnoreCase(GEModelObjectAttribute.TYPE_DATE)){
+			if(format!=null && format.length()>0){
+				return "VARCHAR(" + format.length() + ")";
+			}else{
+				//apply default format
+				return "VARCHAR(" + GEModelObjectAttribute.FORMAT_DATE_DEFAULT.length() + ")";
+			}
 		}
 
 		return null;
@@ -168,7 +178,7 @@ public class SQLiteDBStGenerator {
 	protected static String statementSelect(GERequest request, SQLiteDBModelObject[] models){
 
 		//generate the where clause
-		String[] aWhereOrderLimit = statementWhereOrderLimit(request.operators, models);
+		String[] aWhereOrderLimit = statementWhereOrderLimit(request.operators, request.operatorsLogic, models);
 
 		//generate the attributes response
 		String attrs = statementAttributes(request.responseAttributes, models);
@@ -251,7 +261,7 @@ public class SQLiteDBStGenerator {
 	protected static String statementUpdate(GERequest request){
 		
 		//generate the where clause
-		String sWhere = statementWhereOrderLimit(request.operators, null)[0];
+		String sWhere = statementWhereOrderLimit(request.operators, request.operatorsLogic, null)[0];
 		
 		//generate values
 		String sValues = "";
@@ -276,7 +286,7 @@ public class SQLiteDBStGenerator {
 	protected static String statementDelete(GERequest request){
 		
 		//generate the where clause
-		String sWhere = statementWhereOrderLimit(request.operators, null)[0];
+		String sWhere = statementWhereOrderLimit(request.operators, request.operatorsLogic, null)[0];
 		
 		//return the delete statement
 		return "DELETE FROM " + request.modelObject + " " + sWhere;
@@ -285,16 +295,31 @@ public class SQLiteDBStGenerator {
 	/**
 	 * Generate three Strings with WHERE, ORDER and LIMIT clauses 
 	 * @param operators List<DBRequestOperator> list of operators to generate the statement
+	 * @param operatorsLogic String with the logic to apply to the operators
      * @param models SQLiteDBModelObject[] to use in the request, can be null if select if for one element
 	 * @return String[] statements generated. 0: WHERE, 1: ORDER, 2: LIMIT
 	 */
-	private static String[] statementWhereOrderLimit(List<GERequestOperator> operators, SQLiteDBModelObject[] models){
+	private static String[] statementWhereOrderLimit(List<GERequestOperator> operators, String operatorsLogic, SQLiteDBModelObject[] models){
 		
 		String sWhere = "";
 		String sOrder = "";
 		String sLimit = "";
-		
-		for(GERequestOperator operator : operators){
+
+		//apply operators logic
+		boolean applyOperatorsLogic = operatorsLogic!=null && operatorsLogic.length()>0;
+		if(applyOperatorsLogic){
+			//set a copy of the operators logic in where field to change their values and not change the original
+			sWhere = "WHERE (" + operatorsLogic + ")";
+		}
+
+		//map where to set all the values that will be loaded later
+		Map<String, String> mapOperatorsLogic = new HashMap<>();
+
+		for(int i=0; i<operators.size(); i++){
+
+			//get the operator
+			GERequestOperator operator = operators.get(i);
+
 			if(GERequestOperator.SYMBOL_ORDER.equalsIgnoreCase(operator.symbol)){
 				
 				if(sOrder.length()==0){
@@ -320,14 +345,45 @@ public class SQLiteDBStGenerator {
 				}
 				
 			}else{
-				
-				if(sWhere.length()==0){
-					sWhere += "WHERE ";
-				}else{
-					sWhere += " AND ";
+
+				//convert the operator to text
+				String operatorText = operator.attribute + operator.symbol + "'" + operator.value + "'";
+
+				//if we are applying operators logic translate the value, else use AND
+				if(applyOperatorsLogic){
+
+					//add to the map the two possibilities, the number and the attribute of the operator
+					mapOperatorsLogic.put("{@" + operator.attribute + "}", operatorText);
+					mapOperatorsLogic.put("{@" + String.valueOf(i) + "}", operatorText);
+
+					//convert the logic where text to the new reference
+					sWhere = sWhere.replace(operator.attribute, "{@" + operator.attribute + "}");
+					sWhere = sWhere.replace(String.valueOf(i), "{@" + String.valueOf(i) + "}");
+
+				}else {
+					if (sWhere.length() == 0) {
+						sWhere += "WHERE (";
+					} else {
+						sWhere += " AND ";
+					}
+					sWhere += operatorText;
 				}
-				sWhere += operator.attribute + operator.symbol + "'" + operator.value + "'";
 			}
+		}
+
+		//apply the map of values with logic
+		if(applyOperatorsLogic){
+
+			//replace AND and OR
+			sWhere = sWhere.replace("&&", " AND ").replace("||", " OR ");
+
+			//replace all values with the map
+			for(String key : mapOperatorsLogic.keySet()){
+				sWhere = sWhere.replace(key, mapOperatorsLogic.get(key));
+			}
+
+		}else if(sWhere.length()>0){
+			sWhere += ")";
 		}
 
         //add connection between models to the statement

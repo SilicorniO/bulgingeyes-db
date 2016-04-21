@@ -10,6 +10,9 @@ import com.silicornio.googlyeyes.dband.model.GEModelFactory;
 import com.silicornio.googlyeyes.dband.model.GEModelObject;
 import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -170,6 +173,11 @@ public class GERequestFactory {
      */
     private static Map<String, Object> getObjectMap(String requestType, Object object, GEModelObject modelObject, GEModelObject[] modelObjects){
 
+        //return null if the object is null
+        if(object==null){
+            return null;
+        }
+
         //Prepare Gson to write and read JSON
         Gson gson = new Gson();
 
@@ -203,6 +211,13 @@ public class GERequestFactory {
                         }else{
                             GEL.e("Reference in attribute '" + moa.name + "' of model '" + modelObject.name + "' is not right, that model not exists. That value is not being converted");
                         }
+
+
+                    }else if(moa.type.equalsIgnoreCase(GEModelObjectAttribute.TYPE_DATE)) {
+                        String sDate = getStringDate(GEReflectionUtils.getReflectionValue(object, moa.name), moa.format);
+                        if(sDate!=null){
+                            map.put(moa.name, sDate);
+                        }
                     }else{
                         map.put(moa.name, GEReflectionUtils.getReflectionValue(object, moa.name));
                     }
@@ -215,6 +230,38 @@ public class GERequestFactory {
 
         //return the map
         return map;
+    }
+
+    /**
+     * Return the text of a Date or Calendar object
+     * @param objectDate Object Calendar or Date
+     * @param format String to apply
+     * @return String
+     */
+    private static String getStringDate(Object objectDate, String format){
+
+        //check object and format are not null
+        if(objectDate==null || format==null){
+            return null;
+        }
+
+        Date d;
+        if(objectDate instanceof Date){
+            d = (Date)objectDate;
+        }else if(objectDate instanceof Calendar){
+            d = ((Calendar) objectDate).getTime();
+        }else{
+            return null;
+        }
+
+        //return the result of apply format
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat(format);
+            return sdf.format(d);
+        }catch(Exception e){
+            GEL.e("Exception converting date with format '" + format + "': " + e.toString());
+        }
+        return null;
     }
 
     /**

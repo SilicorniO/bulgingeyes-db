@@ -62,14 +62,14 @@ public class SQLiteDBExecutor {
 	 * @param sStatement String to execute
 	 * @return int value of the ID generated, for no ID: 0 if OK, -1 if error
 	 */
-	public static boolean executeStatementUpdateDelete(SQLiteDatabase conn, String sStatement) throws SQLiteDBException {
+	public static int executeStatementUpdateDelete(SQLiteDatabase conn, String sStatement) throws SQLiteDBException {
 		
 		SQLiteStatement statement = null;
 		try {
 
 			GEL.d("STATEMENT: " + sStatement);
             statement = conn.compileStatement(sStatement);
-            return statement.executeUpdateDelete()>0;
+            return statement.executeUpdateDelete();
 						
 		} catch (Exception e) {
 			GEL.e("Returning exception: " + e.toString());

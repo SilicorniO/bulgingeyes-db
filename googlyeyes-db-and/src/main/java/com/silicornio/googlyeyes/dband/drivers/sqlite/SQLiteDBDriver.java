@@ -4,11 +4,12 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.silicornio.googlyeyes.dband.db.GEDbConf;
 import com.silicornio.googlyeyes.dband.dbrequest.GERequest;
 import com.silicornio.googlyeyes.dband.dbrequest.GERequestOperator;
 import com.silicornio.googlyeyes.dband.dbrequest.GEResponse;
-import com.silicornio.googlyeyes.dband.db.GEDbConf;
 import com.silicornio.googlyeyes.dband.drivers.DBDriver;
+import com.silicornio.googlyeyes.dband.general.GEDBUtils;
 import com.silicornio.googlyeyes.dband.general.GEL;
 import com.silicornio.googlyeyes.dband.model.GEModelFactory;
 import com.silicornio.googlyeyes.dband.model.GEModelObject;
@@ -137,12 +138,12 @@ public class SQLiteDBDriver implements DBDriver {
 							if (attr != null) {
 
                                 //get the type of the attribute for the model
-                                String attrTypeModel = SQLiteDBStGenerator.statementType(attr.type, attr.length);
+                                String attrTypeModel = SQLiteDBStGenerator.statementType(attr.type, attr.format, attr.length);
                                 if(attrTypeModel==null){
                                     //search the type because it can be a reference
                                     GEModelObjectAttribute attrRef = GEModelFactory.findAttributeId(attr.type, mModels);
                                     if(attrRef!=null){
-                                        attrTypeModel = SQLiteDBStGenerator.statementType(attrRef.type, attrRef.length);
+                                        attrTypeModel = SQLiteDBStGenerator.statementType(attrRef.type, attr.format, attrRef.length);
                                     }else{
                                         break;
                                     }
@@ -213,7 +214,10 @@ public class SQLiteDBDriver implements DBDriver {
 	
 	@Override
 	public GEResponse request(GERequest request) {
-		
+
+		//clean values with null from the map
+		GEDBUtils.cleanMapNullValues(request.value);
+
 		//check the type of request to execute
 		GEResponse response = null;
 		if(request.type==null || request.type.equals(GERequest.TYPE_RAW)){
@@ -227,7 +231,7 @@ public class SQLiteDBDriver implements DBDriver {
 		}else if(request.type.equals(GERequest.TYPE_DELETE)){
 			response = executeDelete(request);
 		}
-		
+
 		//return the response generated or null
 		return response;
 	}
@@ -298,7 +302,13 @@ public class SQLiteDBDriver implements DBDriver {
 				}
 			});
 
-			return response;
+			//check if no response with nested object to try to do the request without nested objects
+			if(response.numResults==0 && request.nestedObjects){
+				request.nestedObjects = false;
+				return executeSelect(request);
+			}else {
+				return response;
+			}
 			
 		}catch(SQLiteDBException mdbe){
 			return GEResponse.generateErrorDB(mdbe.toString());
@@ -362,7 +372,7 @@ public class SQLiteDBDriver implements DBDriver {
         //get the first map
         Map<String, Object> map = maps[index];
 
-        //for each attribute with object add the map associated
+        //for each attribute with object add the associated map
         for(GEModelObjectAttribute attr : models[index].attributesObject){
             for(int i=0; i<models.length; i++){
                 if(models[i].name.equalsIgnoreCase(attr.type)){
@@ -428,6 +438,7 @@ public class SQLiteDBDriver implements DBDriver {
 				//generate the request to get the object
 				GERequest idRequest = new GERequest(GERequest.TYPE_GET, model.name);
 				idRequest.responseAttributes = request.responseAttributes;
+				idRequest.nestedObjects = request.nestedObjects;
 				
 				//add the operator, first we need to get the attribute with ID value
 				GEModelObjectAttribute ma = GEModelFactory.findAttributeId(model);
@@ -495,20 +506,23 @@ public class SQLiteDBDriver implements DBDriver {
 	 * @return DBResponse with the result to convert to JSON
 	 */
 	private GEResponse executeDelete(final GERequest request){
-		
+
+		//create the response to return
+		final GEResponse response = new GEResponse();
+
 		try{
 			//generate the statement for select
 			String sStatement = SQLiteDBStGenerator.statementDelete(request);
 
             //execute the statement
-			SQLiteDBExecutor.executeStatementUpdateDelete(mDb, sStatement);
+			response.numResults = SQLiteDBExecutor.executeStatementUpdateDelete(mDb, sStatement);
 
 		}catch(SQLiteDBException mdbe){
 			return GEResponse.generateErrorDB(mdbe.toString());
 		}
 		
 		//return empty because object was deleted
-		return new GEResponse();
+		return response;
 	}
 	
 	/**

@@ -6,6 +6,10 @@ public class GEModelObjectAttribute {
 	public static final String TYPE_STRING = "string";
 	public static final String TYPE_INTEGER = "integer";
 	public static final String TYPE_DOUBLE = "double";
+	public static final String TYPE_DATE = "date";
+
+	//Default formats
+	public static final String FORMAT_DATE_DEFAULT = "yyyy-MM-dd HH:mm:ss.SSS";
 	
 	//ENCRYPTION
 	public static final String ENCRYPT_DEFAULT = "default";
@@ -15,6 +19,9 @@ public class GEModelObjectAttribute {
 	
 	/** Type of attribute **/
 	public String type;
+
+	/** Format to apply **/
+	public String format;
 	
 	/** Length of the attribute, if it is not setted or 0 then the length will be unlimited **/
 	public int length = 0;
@@ -45,6 +52,7 @@ public class GEModelObjectAttribute {
 	 * @return boolean TRUE if it is an object, false if not
 	 */
 	public boolean isObjectType(){
-		return !type.equalsIgnoreCase(TYPE_STRING) && !type.equalsIgnoreCase(TYPE_INTEGER) && !type.equalsIgnoreCase(TYPE_DOUBLE);
+		return !type.equalsIgnoreCase(TYPE_STRING) && !type.equalsIgnoreCase(TYPE_INTEGER) &&
+				!type.equalsIgnoreCase(TYPE_DOUBLE) && !type.equalsIgnoreCase(TYPE_DATE);
 	}
 }

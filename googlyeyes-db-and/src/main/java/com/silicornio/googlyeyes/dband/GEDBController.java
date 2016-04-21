@@ -2,13 +2,13 @@ package com.silicornio.googlyeyes.dband;
 
 import android.content.Context;
 
+import com.silicornio.googlyeyes.dband.db.GEDbConf;
 import com.silicornio.googlyeyes.dband.dbrequest.GERequest;
 import com.silicornio.googlyeyes.dband.dbrequest.GEResponse;
-import com.silicornio.googlyeyes.dband.db.GEDbConf;
 import com.silicornio.googlyeyes.dband.drivers.DBDriver;
 import com.silicornio.googlyeyes.dband.drivers.sqlite.SQLiteDBDriver;
-import com.silicornio.googlyeyes.dband.general.GEL;
 import com.silicornio.googlyeyes.dband.general.GEDBUtils;
+import com.silicornio.googlyeyes.dband.general.GEL;
 import com.silicornio.googlyeyes.dband.model.GEModelConf;
 import com.silicornio.googlyeyes.dband.model.GEModelObject;
 
@@ -101,7 +101,6 @@ public class GEDBController {
 	 */
 	public GEResponse request(GERequest request){
 
-
 		if(request==null){
 			return GEResponse.generateInfo("Request with wrong format");
 		}
@@ -124,8 +123,11 @@ public class GEDBController {
 		
 		return GEResponse.generateInfo("Driver not initialized correctly, restart to check errors");
 	}
-	
-	public void disonnectDb(){
+
+	/**
+	 * Disconnect the database
+	 */
+	public void disconnectDb(){
 		if(dbDriver!=null){
 			dbDriver.disconnect();
 		}

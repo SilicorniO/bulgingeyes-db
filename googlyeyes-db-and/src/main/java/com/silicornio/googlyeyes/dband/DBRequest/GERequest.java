@@ -31,6 +31,9 @@ public class GERequest {
 	
 	/** Array of operators to apply **/
 	public List<GERequestOperator> operators = new ArrayList<>();
+
+	/** Logic to use between operators **/
+	public String operatorsLogic;
 	
 	/** List of attributes to set in the response **/
 	public List<String> responseAttributes = new ArrayList<>();
@@ -39,7 +42,7 @@ public class GERequest {
 	public Map<String,Object> value = new HashMap<String, Object>();
 
 	/** Flag to load or not the objects inside this one **/
-	public boolean nestedObjects = true;
+	public boolean nestedObjects = false;
 	
 	public GERequest(String type, String modelObject){
 		this.type = type;

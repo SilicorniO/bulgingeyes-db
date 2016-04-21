@@ -11,9 +11,11 @@ import com.silicornio.googlyeyes.dband.general.GEL;
 import com.silicornio.googlyeyes.dband.model.GEModelConf;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessage;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessageText;
-
+import com.silicornio.quepotranslator.general.QPL;
 
 public class MainActivity extends AppCompatActivity {
+
+    private GEDBController mDbController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,40 +24,36 @@ public class MainActivity extends AppCompatActivity {
         init();
     }
 
-    private void init(){
+    private void init() {
 
         GEL.showLogs = true;
+        QPL.showLogs = true;
 
         GEDbConf dbConf = GEDBUtils.readConfObjectFromAssets(this, "jedb/db.conf", GEDbConf.class);
         GEModelConf modelConf = GEDBUtils.readConfObjectFromAssets(this, "jedb/model.conf", GEModelConf.class);
 
         deleteDatabase(dbConf.name);
 
-        GEDBController dbController = new GEDBController(dbConf, modelConf);
-        dbController.connectDb(this);
+        mDbController = new GEDBController(dbConf, modelConf);
+        mDbController.connectDb(this);
+
+        //-----
 
         //generate objects to use in tests
-        GEMessageText messageText = new GEMessageText("text of title1");
-        GEMessage message = new GEMessage("title1", messageText);
+        GEMessageText messageTest = new GEMessageText("message");
+        GEMessage message = new GEMessage("title1", messageTest);
 
         //add object
-        GEMessage messageAdd = GEDBObjectFactory.addObject(dbController, message);
-        GEL.i("ADD: " + messageAdd.toString());
+        GEDBObjectFactory.addObject(mDbController, message);
 
-        //get the object
-        GEMessage messageGet = GEDBObjectFactory.getOneObject(dbController, GEMessage.class, "1");
-        if(messageGet!=null) {
+        //get object
+        GEMessage messageGet = GEDBObjectFactory.getOneObject(mDbController, GEMessage.class, "title1");
+        GEL.d("MessageGet: " + messageGet);
 
-            //show the
-            GEL.i("GET: " + messageGet.toString());
 
-            //remove the object
-            GEDBObjectFactory.deleteObject(dbController, GEMessage.class, "title1");
+        //-----
 
-        }else{
-            GEL.i("No message");
-        }
-
-        dbController.disonnectDb();
+        mDbController.disconnectDb();
     }
+
 }

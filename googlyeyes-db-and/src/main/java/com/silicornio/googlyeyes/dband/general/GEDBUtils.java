@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -85,5 +86,25 @@ public class GEDBUtils {
         }
 
         return null;
+    }
+
+
+    /**
+     * Delete all the keys with null values of the map received
+     * @param map Map<String, Object> map to clean
+     */
+    public static void cleanMapNullValues(Map<String, Object> map){
+
+        //check map is null
+        if(map==null){
+            return;
+        }
+
+        for(String key : new ArrayList<>(map.keySet())){
+            if(map.get(key)==null){
+                map.remove(key);
+            }
+        }
+
     }
 }

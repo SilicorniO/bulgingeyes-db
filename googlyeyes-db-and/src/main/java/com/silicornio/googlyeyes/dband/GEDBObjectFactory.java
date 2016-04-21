@@ -3,17 +3,22 @@ package com.silicornio.googlyeyes.dband;
 import android.util.Pair;
 
 import com.google.gson.Gson;
-import com.silicornio.googlyeyes.dband.dbrequest.GERequestFactory;
 import com.silicornio.googlyeyes.dband.dbrequest.GERequest;
+import com.silicornio.googlyeyes.dband.dbrequest.GERequestFactory;
 import com.silicornio.googlyeyes.dband.dbrequest.GERequestOperator;
 import com.silicornio.googlyeyes.dband.dbrequest.GEResponse;
+import com.silicornio.googlyeyes.dband.dbrequest.GEResponseFactory;
 import com.silicornio.googlyeyes.dband.general.GEL;
 import com.silicornio.googlyeyes.dband.general.GEReflectionUtils;
 import com.silicornio.googlyeyes.dband.model.GEModelFactory;
 import com.silicornio.googlyeyes.dband.model.GEModelObject;
 import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
+import com.silicornio.quepotranslator.QPCustomTranslation;
+import com.silicornio.quepotranslator.QPTransManager;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -38,8 +43,9 @@ public class GEDBObjectFactory {
         if(modelObject!=null) {
             GERequest request = new GERequest(GERequest.TYPE_GET, modelObject.name);
             request.operators.add(new GERequestOperator(null, GERequestOperator.SYMBOL_LIMIT, "1"));
+            request.nestedObjects = true;
             GEResponse response = dbController.request(request);
-            return getOneObjectResponse(response, modelObject, objectClass);
+            return getOneObjectResponse(response, modelObject, objectClass, dbController);
         }else{
             return null;
         }
@@ -61,12 +67,14 @@ public class GEDBObjectFactory {
 
         Pair<GEModelObject, GEModelObjectAttribute> modelAndId = GERequestFactory.getModelAndId(dbController, objectClass);
         if(modelAndId!=null) {
-            GEResponse response = dbController.request(GERequestFactory.getObjects(
+            GERequest request = GERequestFactory.getObjects(
                     modelAndId.first.name,
                     new String[]{modelAndId.second.name},
                     new String[]{sId},
-                    dbController.getModelConf().objects));
-            return getOneObjectResponse(response, modelAndId.first, objectClass);
+                    dbController.getModelConf().objects);
+            request.nestedObjects = true;
+            GEResponse response = dbController.request(request);
+            return getOneObjectResponse(response, modelAndId.first, objectClass, dbController);
         }else{
             return null;
         }
@@ -99,12 +107,14 @@ public class GEDBObjectFactory {
 
         GEModelObject modelObject = GEModelFactory.findObject(objectClass.getSimpleName(), dbController.getModelConf().objects);
         if(modelObject!=null) {
-            GEResponse response = dbController.request(GERequestFactory.getObjects(
+            GERequest request = GERequestFactory.getObjects(
                     modelObject.name,
                     attrNames,
                     attrValues,
-                    dbController.getModelConf().objects));
-            return getObjectsResponse(response, modelObject, objectClass);
+                    dbController.getModelConf().objects);
+            request.nestedObjects = true;
+            GEResponse response = dbController.request(request);
+            return getObjectsResponse(response, modelObject, objectClass, dbController);
         }else{
             return null;
         }
@@ -124,8 +134,10 @@ public class GEDBObjectFactory {
             throw new IllegalArgumentException("Parameters cannot be null");
         }
 
-        GEResponse response = dbController.request(GERequestFactory.addObject(object.getClass().getSimpleName(), object, dbController.getModelConf().objects));
-        return getOneObjectResponse(response, GEModelFactory.findObject(object.getClass().getSimpleName(), dbController.getModelConf().objects), (Class<T>) object.getClass());
+        GERequest request = GERequestFactory.addObject(object.getClass().getSimpleName(), object, dbController.getModelConf().objects);
+        request.nestedObjects = true;
+        GEResponse response = dbController.request(request);
+        return getOneObjectResponse(response, GEModelFactory.findObject(object.getClass().getSimpleName(), dbController.getModelConf().objects), (Class<T>) object.getClass(), dbController);
     }
 
     //----- UPDATE -----
@@ -151,7 +163,7 @@ public class GEDBObjectFactory {
         if(response.numResults==0) {
             response = dbController.request(GERequestFactory.addObject(object.getClass().getSimpleName(), object, dbController.getModelConf().objects));
         }
-        return getOneObjectResponse(response, GEModelFactory.findObject(object.getClass().getSimpleName(), dbController.getModelConf().objects), (Class<T>) object.getClass());
+        return getOneObjectResponse(response, GEModelFactory.findObject(object.getClass().getSimpleName(), dbController.getModelConf().objects), (Class<T>) object.getClass(), dbController);
     }
 
     /**
@@ -176,7 +188,7 @@ public class GEDBObjectFactory {
                         new String[]{modelAndId.second.name},
                         new String[]{String.valueOf(value)},
                         dbController.getModelConf().objects));
-                return getOneObjectResponse(response, modelAndId.first, (Class<T>) object.getClass());
+                return getOneObjectResponse(response, modelAndId.first, (Class<T>) object.getClass(), dbController);
             }else{
                 return null;
             }
@@ -194,9 +206,9 @@ public class GEDBObjectFactory {
      * @param dbController DbController to read model and execute queries
      * @param objectClass  Class of the object to find in the model (same name)
      * @param sId String identifier
-     * @return boolean TRUE if deleted one or more elements, FALSE if error or not deleted any element
+     * @return int number of rows affected
      */
-    public static boolean deleteObject(GEDBController dbController, Class objectClass, String sId){
+    public static int deleteObject(GEDBController dbController, Class objectClass, String sId){
 
         if(dbController==null){
             throw new IllegalArgumentException("Parameters cannot be null");
@@ -209,9 +221,9 @@ public class GEDBObjectFactory {
                             new String[]{modelAndId.second.name},
                             new String[]{sId},
                             dbController.getModelConf().objects));
-            return response.numResults>0;
+            return response.numResults;
         }else{
-            return false;
+            return 0;
         }
 
     }
@@ -224,7 +236,7 @@ public class GEDBObjectFactory {
      * @param attrValues String[] with array of values for parameters given
      * @return boolean TRUE if deleted one or more elements, FALSE if error or not deleted any element
      */
-    public static boolean deleteObjects(GEDBController dbController, Class objectClass, String[] attrNames, String[] attrValues){
+    public static int deleteObjects(GEDBController dbController, Class objectClass, String[] attrNames, String[] attrValues){
 
         if(dbController==null){
             throw new IllegalArgumentException("Parameters cannot be null");
@@ -233,9 +245,9 @@ public class GEDBObjectFactory {
         Pair<GEModelObject, GEModelObjectAttribute> modelAndId = GERequestFactory.getModelAndId(dbController, objectClass);
         if(modelAndId!=null) {
             GEResponse response = dbController.request(GERequestFactory.deleteObjects(modelAndId.first.name, attrNames, attrValues, dbController.getModelConf().objects));
-            return response.numResults>0;
+            return response.numResults;
         }else{
-            return false;
+            return 0;
         }
 
     }
@@ -264,7 +276,7 @@ public class GEDBObjectFactory {
 
         //execute the request
         GEResponse response = dbController.request(dbRequest);
-        return getObjectsResponse(response, modelObject, objectClass);
+        return getObjectsResponse(response, modelObject, objectClass, dbController);
     }
 
     /**
@@ -289,7 +301,7 @@ public class GEDBObjectFactory {
 
         //execute the request
         GEResponse response = dbController.request(dbRequest);
-        return getOneObjectResponse(response, modelObject, objectClass);
+        return getOneObjectResponse(response, modelObject, objectClass, dbController);
     }
 
     //----- UTILS -----
@@ -299,9 +311,10 @@ public class GEDBObjectFactory {
      * @param response DBResponse to read
      * @param modelObject ModelObject reference
      * @param objectClass Class to use for convert to an object
+     * @param dbController GEDBController to get the list of objects of the model
      * @return Object translated or null if there was an error
      */
-    public static <T>T getOneObjectResponse(GEResponse response, GEModelObject modelObject, Class<T> objectClass){
+    public static <T>T getOneObjectResponse(GEResponse response, GEModelObject modelObject, Class<T> objectClass, GEDBController dbController){
 
         //Prepare Gson to write and read JSON
         Gson gson = new Gson();
@@ -321,7 +334,13 @@ public class GEDBObjectFactory {
         if(attrObjectJson!=null){
             return gson.fromJson((String)result.get(attrObjectJson.name), objectClass);
         }else {
-            return gson.fromJson(gson.toJson(result), objectClass);
+
+            //convert response date values to a Date object
+            GEResponseFactory.convertStringDatesToObject(modelObject, result, dbController.getModelConf().objects);
+
+            QPTransManager manager = new QPTransManager(null);
+            manager.addCustomTranslation(mCustomTranslationDate);
+            return manager.translate(result, objectClass);
         }
     }
 
@@ -330,9 +349,10 @@ public class GEDBObjectFactory {
      * @param response DBResponse to read
      * @param modelObject ModelObject reference
      * @param objectClass Class to use for convert to an object
+     * @param dbController GEDBController to get the list of objects of the model
      * @return List<T> List of objects or null if there was an error
      */
-    public static <T>List<T> getObjectsResponse(GEResponse response, GEModelObject modelObject, Class<T> objectClass){
+    public static <T>List<T> getObjectsResponse(GEResponse response, GEModelObject modelObject, Class<T> objectClass, GEDBController dbController){
 
         //Prepare Gson to write and read JSON
         Gson gson = new Gson();
@@ -352,15 +372,34 @@ public class GEDBObjectFactory {
 
         //generate the list of objects
         List<T> listResults = new ArrayList<>();
+        QPTransManager manager = new QPTransManager(null);
         for(Map<String, Object> result : results){
+
+            //convert response date values to a Date object
+            GEResponseFactory.convertStringDatesToObject(modelObject, result, dbController.getModelConf().objects);
+
             if(attrObjectJson!=null){
                 listResults.add(gson.fromJson((String)result.get(attrObjectJson.name), objectClass));
             }else{
-                listResults.add(gson.fromJson(gson.toJson(result), objectClass));
+                listResults.add(manager.translate(result, objectClass));
             }
         }
         return listResults;
     }
 
+
+    private static QPCustomTranslation<Calendar, Date> mCustomTranslationDate = new QPCustomTranslation<Calendar, Date>() {
+        @Override
+        public Date onTranslation(Calendar c) {
+            return c.getTime();
+        }
+
+        @Override
+        public Calendar onTranslationInverse(Date d) {
+            Calendar c = Calendar.getInstance();
+            c.setTime(d);
+            return c;
+        }
+    };
 
 }
