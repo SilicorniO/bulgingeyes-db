@@ -5,10 +5,10 @@ import android.support.v7.app.AppCompatActivity;
 
 import com.silicornio.googlyeyes.dband.GEDBController;
 import com.silicornio.googlyeyes.dband.GEDBObjectFactory;
-import com.silicornio.googlyeyes.dband.db.GEDbConf;
+import com.silicornio.googlyeyes.dband.GEDbConf;
 import com.silicornio.googlyeyes.dband.general.GEDBUtils;
 import com.silicornio.googlyeyes.dband.general.GEL;
-import com.silicornio.googlyeyes.dband.model.GEModelConf;
+import com.silicornio.googlyeyes.dband.GEModelConf;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessage;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessageText;
 import com.silicornio.quepotranslator.general.QPL;
@@ -39,16 +39,13 @@ public class MainActivity extends AppCompatActivity {
 
         //-----
 
-        //generate objects to use in tests
         GEMessageText messageTest = new GEMessageText("message");
         GEMessage message = new GEMessage("title1", messageTest);
 
         //add object
-        GEDBObjectFactory.addObject(mDbController, message);
+        GEMessage messageAdd = GEDBObjectFactory.addObject(mDbController, message);
 
-        //get object
-        GEMessage messageGet = GEDBObjectFactory.getOneObject(mDbController, GEMessage.class, "title1");
-        GEL.d("MessageGet: " + messageGet);
+        GEL.d("MessageAdd: " + messageAdd.getText().getText());
 
 
         //-----

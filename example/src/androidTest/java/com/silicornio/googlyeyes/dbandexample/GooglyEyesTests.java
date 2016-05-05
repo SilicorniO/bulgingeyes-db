@@ -8,13 +8,13 @@ import android.test.suitebuilder.annotation.SmallTest;
 
 import com.silicornio.googlyeyes.dband.GEDBController;
 import com.silicornio.googlyeyes.dband.GEDBObjectFactory;
-import com.silicornio.googlyeyes.dband.db.GEDbConf;
-import com.silicornio.googlyeyes.dband.dbrequest.GERequest;
-import com.silicornio.googlyeyes.dband.dbrequest.GERequestOperator;
-import com.silicornio.googlyeyes.dband.dbrequest.GEResponse;
+import com.silicornio.googlyeyes.dband.GEDbConf;
+import com.silicornio.googlyeyes.dband.GERequest;
+import com.silicornio.googlyeyes.dband.GERequestOperator;
+import com.silicornio.googlyeyes.dband.GEResponse;
 import com.silicornio.googlyeyes.dband.general.GEDBUtils;
-import com.silicornio.googlyeyes.dband.model.GEModelConf;
-import com.silicornio.googlyeyes.dband.model.GEModelFactory;
+import com.silicornio.googlyeyes.dband.GEModelConf;
+import com.silicornio.googlyeyes.dband.GEModelFactory;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessage;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessageText;
 
@@ -182,7 +182,7 @@ public class GooglyEyesTests {
         GEResponse response = mDbController.request(getRequest);
 
         //read the response
-        List<GEMessage> messageGet = GEDBObjectFactory.getObjectsResponse(response, GEModelFactory.findObject("GEMessage", mDbController.getModelConf().objects), GEMessage.class, mDbController);
+        List<GEMessage> messageGet = GEDBObjectFactory.getObjectsResponse(response, GEModelFactory.findObject("GEMessage", mDbController.getModelConf().getObjects()), GEMessage.class, mDbController);
 
         //compare object received with its identifier (title)
         assertEquals(messageGet.size(), 2);
@@ -213,7 +213,7 @@ public class GooglyEyesTests {
         GEResponse response = mDbController.request(getRequest);
 
         //read the response
-        List<GEMessage> messageGet = GEDBObjectFactory.getObjectsResponse(response, GEModelFactory.findObject("GEMessage", mDbController.getModelConf().objects), GEMessage.class, mDbController);
+        List<GEMessage> messageGet = GEDBObjectFactory.getObjectsResponse(response, GEModelFactory.findObject("GEMessage", mDbController.getModelConf().getObjects()), GEMessage.class, mDbController);
 
         //compare object received with its identifier (title)
         assertEquals(messageGet.size(), 1);
@@ -240,7 +240,7 @@ public class GooglyEyesTests {
         GEResponse response = mDbController.request(rawRequest);
 
         //read the response
-        GEMessage messageGet = GEDBObjectFactory.getOneObjectResponse(response, GEModelFactory.findObject("GEMessage", mDbController.getModelConf().objects), GEMessage.class, mDbController);
+        GEMessage messageGet = GEDBObjectFactory.getOneObjectResponse(response, GEModelFactory.findObject("GEMessage", mDbController.getModelConf().getObjects()), GEMessage.class, mDbController);
 
         //compare object received with its identifier (title)
         assertEquals(message.getTitle(), messageGet.getTitle());
@@ -265,7 +265,7 @@ public class GooglyEyesTests {
         GEResponse response = mDbController.request(rawRequest);
 
         //read the response
-        List<GEMessage> messageGet = GEDBObjectFactory.getObjectsResponse(response, GEModelFactory.findObject("GEMessage", mDbController.getModelConf().objects), GEMessage.class, mDbController);
+        List<GEMessage> messageGet = GEDBObjectFactory.getObjectsResponse(response, GEModelFactory.findObject("GEMessage", mDbController.getModelConf().getObjects()), GEMessage.class, mDbController);
 
         //compare object received with its identifier (title)
         assertEquals(messageGet.size(), 2);

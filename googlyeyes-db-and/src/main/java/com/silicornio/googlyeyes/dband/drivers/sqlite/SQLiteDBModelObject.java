@@ -1,7 +1,7 @@
 package com.silicornio.googlyeyes.dband.drivers.sqlite;
 
-import com.silicornio.googlyeyes.dband.model.GEModelObject;
-import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
+import com.silicornio.googlyeyes.dband.GEModelObject;
+import com.silicornio.googlyeyes.dband.GEModelObjectAttribute;
 
 public class SQLiteDBModelObject extends GEModelObject {
 

@@ -2,8 +2,6 @@ package com.silicornio.googlyeyes.dband.general;
 
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Map;
 
 public class GEReflectionUtils {
 
@@ -16,11 +14,25 @@ public class GEReflectionUtils {
     public static Object getReflectionValue(Object object, String varName){
 
         try {
-            Field field = object.getClass().getDeclaredField(varName);
-            field.setAccessible(true);
-            return field.get(object);
+            Field field = null;
+            Class klass = object.getClass();
+            do {
+                try {
+                    field = klass.getDeclaredField(varName);
+                }catch(NoSuchFieldException nsfe){
+                    klass = klass.getSuperclass();
+                }
+            }while(field==null && klass!=null);
+
+            if(field!=null) {
+                field.setAccessible(true);
+                return field.get(object);
+            }else{
+                GEL.e("Object '" + object.getClass().getSimpleName() + "' hasn't got the field '" + varName + "' of the model");
+            }
+
         } catch (Exception e) {
-            GEL.e("Object '" + object.getClass().getSimpleName() + "' hasn't got the field '" + varName + "' of the model: " + e.toString());
+            GEL.e("Exception getting value from object '" + object.getClass().getSimpleName() + "' hasn't got the field '" + varName + "' of the model: " + e.toString());
         }
         return null;
     }

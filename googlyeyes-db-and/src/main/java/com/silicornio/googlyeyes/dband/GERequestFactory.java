@@ -1,14 +1,10 @@
-package com.silicornio.googlyeyes.dband.dbrequest;
+package com.silicornio.googlyeyes.dband;
 
 import android.util.Pair;
 
 import com.google.gson.Gson;
-import com.silicornio.googlyeyes.dband.GEDBController;
 import com.silicornio.googlyeyes.dband.general.GEL;
 import com.silicornio.googlyeyes.dband.general.GEReflectionUtils;
-import com.silicornio.googlyeyes.dband.model.GEModelFactory;
-import com.silicornio.googlyeyes.dband.model.GEModelObject;
-import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

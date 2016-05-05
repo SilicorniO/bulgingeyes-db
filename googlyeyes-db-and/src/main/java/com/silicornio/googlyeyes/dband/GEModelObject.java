@@ -1,4 +1,6 @@
-package com.silicornio.googlyeyes.dband.model;
+package com.silicornio.googlyeyes.dband;
+
+import java.util.Arrays;
 
 public class GEModelObject {
 	
@@ -16,4 +18,12 @@ public class GEModelObject {
 	/** Action allowed for this object in the database **/
 	public String dbAction = ACTION_CREATE;
 
+	@Override
+	public String toString() {
+		return "GEModelObject{" +
+				"name='" + name + '\'' +
+				", attributes=" + Arrays.toString(attributes) +
+				", dbAction='" + dbAction + '\'' +
+				'}';
+	}
 }

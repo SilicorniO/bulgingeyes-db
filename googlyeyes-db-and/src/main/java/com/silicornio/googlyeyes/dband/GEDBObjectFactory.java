@@ -3,16 +3,8 @@ package com.silicornio.googlyeyes.dband;
 import android.util.Pair;
 
 import com.google.gson.Gson;
-import com.silicornio.googlyeyes.dband.dbrequest.GERequest;
-import com.silicornio.googlyeyes.dband.dbrequest.GERequestFactory;
-import com.silicornio.googlyeyes.dband.dbrequest.GERequestOperator;
-import com.silicornio.googlyeyes.dband.dbrequest.GEResponse;
-import com.silicornio.googlyeyes.dband.dbrequest.GEResponseFactory;
 import com.silicornio.googlyeyes.dband.general.GEL;
 import com.silicornio.googlyeyes.dband.general.GEReflectionUtils;
-import com.silicornio.googlyeyes.dband.model.GEModelFactory;
-import com.silicornio.googlyeyes.dband.model.GEModelObject;
-import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
 import com.silicornio.quepotranslator.QPCustomTranslation;
 import com.silicornio.quepotranslator.QPTransManager;
 
@@ -82,6 +74,19 @@ public class GEDBObjectFactory {
     }
 
     /**
+     * Get the object with the identifier received
+     * @param dbController DbController to read model and execute queries
+     * @param request GERequest to execute
+     * @param classModel Class of the model for the casting
+     * @return T Object gotten from database or null if there was an error
+     */
+    public static <T>T getOneObject(GEDBController dbController, GERequest request, Class<T> classModel){
+
+        GEModelObject modelObject = GEModelFactory.findObject(request.modelObject, dbController.getModelConf().getObjects());
+        return GEDBObjectFactory.getOneObjectResponse(dbController.request(request), modelObject, classModel, dbController);
+    }
+
+    /**
      * Get all the objects of the type received
      * @param dbController DbController to read model and execute queries
      * @param objectClass  Class of the object to find in the model (same name)
@@ -118,6 +123,19 @@ public class GEDBObjectFactory {
         }else{
             return null;
         }
+    }
+
+    /**
+     * Get the object with the identifier received
+     * @param dbController DbController to read model and execute queries
+     * @param request GERequest to execute
+     * @param classModel Class of the model for the casting
+     * @return T Object gotten from database or null if there was an error
+     */
+    public static <T>List<T> getObjects(GEDBController dbController, GERequest request, Class<T> classModel){
+
+        GEModelObject modelObject = GEModelFactory.findObject(request.modelObject, dbController.getModelConf().getObjects());
+        return GEDBObjectFactory.getObjectsResponse(dbController.request(request), modelObject, classModel, dbController);
     }
 
     //----- ADD -----

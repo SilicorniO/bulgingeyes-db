@@ -1,10 +1,7 @@
-package com.silicornio.googlyeyes.dband.dbrequest;
+package com.silicornio.googlyeyes.dband;
 
 
 import com.silicornio.googlyeyes.dband.general.GECryptLib;
-import com.silicornio.googlyeyes.dband.model.GEModelFactory;
-import com.silicornio.googlyeyes.dband.model.GEModelObject;
-import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,7 +35,7 @@ public class GERequest {
 	/** List of attributes to set in the response **/
 	public List<String> responseAttributes = new ArrayList<>();
 	
-	/** Object of type modelObject and filled **/ 
+	/** Object of type modelObject and filled **/
 	public Map<String,Object> value = new HashMap<String, Object>();
 
 	/** Flag to load or not the objects inside this one **/
@@ -48,6 +45,8 @@ public class GERequest {
 		this.type = type;
 		this.modelObject = modelObject;
 	}
+
+	//----- ADDITIONAL -----
 	
 	/**
 	 * Apply encryption to the attributes of the request that needs it

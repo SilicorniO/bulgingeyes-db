@@ -1,12 +1,12 @@
 package com.silicornio.googlyeyes.dband.drivers.sqlite;
 
 
-import com.silicornio.googlyeyes.dband.dbrequest.GERequest;
-import com.silicornio.googlyeyes.dband.dbrequest.GERequestOperator;
+import com.silicornio.googlyeyes.dband.GERequest;
+import com.silicornio.googlyeyes.dband.GERequestOperator;
 import com.silicornio.googlyeyes.dband.general.GEL;
-import com.silicornio.googlyeyes.dband.model.GEModelFactory;
-import com.silicornio.googlyeyes.dband.model.GEModelObject;
-import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
+import com.silicornio.googlyeyes.dband.GEModelFactory;
+import com.silicornio.googlyeyes.dband.GEModelObject;
+import com.silicornio.googlyeyes.dband.GEModelObjectAttribute;
 
 import java.util.HashMap;
 import java.util.List;
@@ -232,8 +232,8 @@ public class SQLiteDBStGenerator {
                         if (moaRef != null && ((Map) request.value.get(key)).get(moaRef.name)!=null) {
                             sValues += "'" + ((Map) request.value.get(key)).get(moaRef.name).toString() + "'";
                         } else {
-                            GEL.e("It was impossible to find the ID attribute of the model requested for '" + modelObject.name + "', Empty string was setted to '" + moa.name + "'");
-                            sValues += "";
+                            GEL.e("It was impossible to find the ID attribute of the model requested for '" + modelObject.name + "' or is null the attribute '" + moa.name + "'");
+                            sValues += "null";
                         }
 
                     } else {

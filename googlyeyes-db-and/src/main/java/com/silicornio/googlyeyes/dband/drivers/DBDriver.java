@@ -3,10 +3,10 @@ package com.silicornio.googlyeyes.dband.drivers;
 
 import android.content.Context;
 
-import com.silicornio.googlyeyes.dband.dbrequest.GERequest;
-import com.silicornio.googlyeyes.dband.dbrequest.GEResponse;
-import com.silicornio.googlyeyes.dband.db.GEDbConf;
-import com.silicornio.googlyeyes.dband.model.GEModelObject;
+import com.silicornio.googlyeyes.dband.GERequest;
+import com.silicornio.googlyeyes.dband.GEResponse;
+import com.silicornio.googlyeyes.dband.GEDbConf;
+import com.silicornio.googlyeyes.dband.GEModelObject;
 
 
 public interface DBDriver {

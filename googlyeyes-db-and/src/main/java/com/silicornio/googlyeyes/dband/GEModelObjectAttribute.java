@@ -1,4 +1,4 @@
-package com.silicornio.googlyeyes.dband.model;
+package com.silicornio.googlyeyes.dband;
 
 public class GEModelObjectAttribute {
 

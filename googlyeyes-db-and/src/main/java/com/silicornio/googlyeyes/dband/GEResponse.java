@@ -1,4 +1,4 @@
-package com.silicornio.googlyeyes.dband.dbrequest;
+package com.silicornio.googlyeyes.dband;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,13 +32,6 @@ public class GEResponse {
 		response.errorDB = errorDB;
 		return response;
 	}
-	
-	public void clean(){
-		if(numResults==1){
-			result = results.get(0);
-			results.clear();
-		}
-	}
 
 	@Override
 	public String toString() {
@@ -49,5 +42,14 @@ public class GEResponse {
 				", info='" + info + '\'' +
 				", errorDB='" + errorDB + '\'' +
 				'}';
+	}
+
+	//----- ADDITIONAL -----
+
+	public void clean(){
+		if(numResults==1){
+			result = results.get(0);
+			results.clear();
+		}
 	}
 }

@@ -2,24 +2,19 @@ package com.silicornio.googlyeyes.dband;
 
 import android.content.Context;
 
-import com.silicornio.googlyeyes.dband.db.GEDbConf;
-import com.silicornio.googlyeyes.dband.dbrequest.GERequest;
-import com.silicornio.googlyeyes.dband.dbrequest.GEResponse;
 import com.silicornio.googlyeyes.dband.drivers.DBDriver;
 import com.silicornio.googlyeyes.dband.drivers.sqlite.SQLiteDBDriver;
 import com.silicornio.googlyeyes.dband.general.GEDBUtils;
 import com.silicornio.googlyeyes.dband.general.GEL;
-import com.silicornio.googlyeyes.dband.model.GEModelConf;
-import com.silicornio.googlyeyes.dband.model.GEModelObject;
 
 public class GEDBController {
 
 	
 	/** Database configuration **/
-	public GEDbConf mDbConf;
+	protected GEDbConf mDbConf;
 	
 	/** Model configuration **/
-	private GEModelConf mModelConf;
+	protected GEModelConf mModelConf;
 		
 	/** Driver to connect to database **/
 	private DBDriver dbDriver;

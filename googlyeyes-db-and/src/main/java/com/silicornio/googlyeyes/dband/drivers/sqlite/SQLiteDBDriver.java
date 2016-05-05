@@ -4,16 +4,16 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.silicornio.googlyeyes.dband.db.GEDbConf;
-import com.silicornio.googlyeyes.dband.dbrequest.GERequest;
-import com.silicornio.googlyeyes.dband.dbrequest.GERequestOperator;
-import com.silicornio.googlyeyes.dband.dbrequest.GEResponse;
+import com.silicornio.googlyeyes.dband.GEDbConf;
+import com.silicornio.googlyeyes.dband.GERequest;
+import com.silicornio.googlyeyes.dband.GERequestOperator;
+import com.silicornio.googlyeyes.dband.GEResponse;
 import com.silicornio.googlyeyes.dband.drivers.DBDriver;
 import com.silicornio.googlyeyes.dband.general.GEDBUtils;
 import com.silicornio.googlyeyes.dband.general.GEL;
-import com.silicornio.googlyeyes.dband.model.GEModelFactory;
-import com.silicornio.googlyeyes.dband.model.GEModelObject;
-import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
+import com.silicornio.googlyeyes.dband.GEModelFactory;
+import com.silicornio.googlyeyes.dband.GEModelObject;
+import com.silicornio.googlyeyes.dband.GEModelObjectAttribute;
 
 import java.util.ArrayList;
 import java.util.HashMap;

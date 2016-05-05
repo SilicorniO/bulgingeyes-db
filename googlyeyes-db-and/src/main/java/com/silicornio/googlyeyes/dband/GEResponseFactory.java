@@ -1,9 +1,6 @@
-package com.silicornio.googlyeyes.dband.dbrequest;
+package com.silicornio.googlyeyes.dband;
 
 import com.silicornio.googlyeyes.dband.general.GEL;
-import com.silicornio.googlyeyes.dband.model.GEModelFactory;
-import com.silicornio.googlyeyes.dband.model.GEModelObject;
-import com.silicornio.googlyeyes.dband.model.GEModelObjectAttribute;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

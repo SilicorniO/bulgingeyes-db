@@ -1,4 +1,4 @@
-package com.silicornio.googlyeyes.dband.db;
+package com.silicornio.googlyeyes.dband;
 
 public class GEDbConf {
 

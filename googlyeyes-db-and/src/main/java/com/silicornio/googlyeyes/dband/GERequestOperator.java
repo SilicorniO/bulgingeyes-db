@@ -1,4 +1,4 @@
-package com.silicornio.googlyeyes.dband.dbrequest;
+package com.silicornio.googlyeyes.dband;
 
 public class GERequestOperator {
 
@@ -26,7 +26,11 @@ public class GERequestOperator {
 		this.symbol = symbol;
 		this.value = value;
 	}
-	
+
+	public String getAttribute() {
+		return attribute;
+	}
+
 	@Override
 	public GERequestOperator clone(){
 		return new GERequestOperator(attribute, symbol, value);
