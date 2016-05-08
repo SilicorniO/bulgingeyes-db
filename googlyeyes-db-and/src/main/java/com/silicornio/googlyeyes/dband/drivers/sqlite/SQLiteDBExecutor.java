@@ -98,8 +98,10 @@ public class SQLiteDBExecutor {
 			GEL.d("STATEMENT QUERY: " + sStatement);
 			Cursor cursor = conn.rawQuery(sStatement, null);
 			if(cursor!=null){
-				
-				return listener.onResultSet(cursor);
+				GEL.d("Executing cursor");
+				boolean result = listener.onResultSet(cursor);
+				cursor.close();
+				return result;
 			}else{
 				return false;
 			}

@@ -260,9 +260,9 @@ public class GEDBObjectFactory {
             throw new IllegalArgumentException("Parameters cannot be null");
         }
 
-        Pair<GEModelObject, GEModelObjectAttribute> modelAndId = GERequestFactory.getModelAndId(dbController, objectClass);
-        if(modelAndId!=null) {
-            GEResponse response = dbController.request(GERequestFactory.deleteObjects(modelAndId.first.name, attrNames, attrValues, dbController.getModelConf().objects));
+        GEModelObject modelObject = GEModelFactory.findObject(objectClass.getSimpleName(), dbController.getModelConf().objects);
+        if(modelObject!=null) {
+            GEResponse response = dbController.request(GERequestFactory.deleteObjects(modelObject.name, attrNames, attrValues, dbController.getModelConf().objects));
             return response.numResults;
         }else{
             return 0;
@@ -375,6 +375,9 @@ public class GEDBObjectFactory {
         //Prepare Gson to write and read JSON
         Gson gson = new Gson();
 
+        //list of objects to return
+        List<T> listResults = new ArrayList<>();
+
         //convert the response to an object
         List<Map<String, Object>> results = new ArrayList<>();
         if(response.numResults==1) {
@@ -382,14 +385,13 @@ public class GEDBObjectFactory {
         }else if(response.numResults>1) {
             results.addAll(response.results);
         }else {
-            return null;
+            return listResults;
         }
 
         //check if the model has a JSON attribute to return it
         GEModelObjectAttribute attrObjectJson = GEModelFactory.findAttributeObjectJson(modelObject);
 
         //generate the list of objects
-        List<T> listResults = new ArrayList<>();
         QPTransManager manager = new QPTransManager(null);
         for(Map<String, Object> result : results){
 

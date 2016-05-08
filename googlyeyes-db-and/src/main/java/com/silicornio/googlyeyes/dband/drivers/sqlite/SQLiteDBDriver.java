@@ -215,21 +215,28 @@ public class SQLiteDBDriver implements DBDriver {
 	@Override
 	public GEResponse request(GERequest request) {
 
+		//check db is not null
+		if(mDb==null){
+			return null;
+		}
+
 		//clean values with null from the map
 		GEDBUtils.cleanMapNullValues(request.value);
 
 		//check the type of request to execute
 		GEResponse response = null;
-		if(request.type==null || request.type.equals(GERequest.TYPE_RAW)){
-			response = executeRaw(request);
-		}else if(request.type.equals(GERequest.TYPE_GET)){
-			response = executeSelect(request);
-		}else if(request.type.equals(GERequest.TYPE_ADD)){
-			response = executeInsert(request);
-		}else if(request.type.equals(GERequest.TYPE_UPDATE)){
-			response = executeUpdate(request);
-		}else if(request.type.equals(GERequest.TYPE_DELETE)){
-			response = executeDelete(request);
+		synchronized (mDb) {
+			if (request.type == null || request.type.equals(GERequest.TYPE_RAW)) {
+				response = executeRaw(request);
+			} else if (request.type.equals(GERequest.TYPE_GET)) {
+				response = executeSelect(request);
+			} else if (request.type.equals(GERequest.TYPE_ADD)) {
+				response = executeInsert(request);
+			} else if (request.type.equals(GERequest.TYPE_UPDATE)) {
+				response = executeUpdate(request);
+			} else if (request.type.equals(GERequest.TYPE_DELETE)) {
+				response = executeDelete(request);
+			}
 		}
 
 		//return the response generated or null

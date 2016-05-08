@@ -84,8 +84,7 @@ public class GEDBController {
 			}			
 				
 		}
-		
-		
+
 		//return OK connected
 		return true;
 	}
@@ -125,6 +124,7 @@ public class GEDBController {
 	public void disconnectDb(){
 		if(dbDriver!=null){
 			dbDriver.disconnect();
+			dbDriver = null;
 		}
 	}
 		
