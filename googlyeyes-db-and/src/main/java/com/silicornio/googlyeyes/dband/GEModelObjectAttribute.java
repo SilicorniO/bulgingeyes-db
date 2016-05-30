@@ -4,6 +4,7 @@ public class GEModelObjectAttribute {
 
 	//TYPES
 	public static final String TYPE_STRING = "string";
+	public static final String TYPE_BOOLEAN = "boolean";
 	public static final String TYPE_INTEGER = "integer";
 	public static final String TYPE_DOUBLE = "double";
 	public static final String TYPE_DATE = "date";
@@ -52,7 +53,8 @@ public class GEModelObjectAttribute {
 	 * @return boolean TRUE if it is an object, false if not
 	 */
 	public boolean isObjectType(){
-		return !type.equalsIgnoreCase(TYPE_STRING) && !type.equalsIgnoreCase(TYPE_INTEGER) &&
-				!type.equalsIgnoreCase(TYPE_DOUBLE) && !type.equalsIgnoreCase(TYPE_DATE);
+		return !type.equalsIgnoreCase(TYPE_STRING) && !type.equalsIgnoreCase(TYPE_INTEGER)  &&
+				!type.equalsIgnoreCase(TYPE_DOUBLE) && !type.equalsIgnoreCase(TYPE_DATE) &&
+				!type.equalsIgnoreCase(TYPE_BOOLEAN);
 	}
 }

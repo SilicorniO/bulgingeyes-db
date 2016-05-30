@@ -11,6 +11,10 @@ public class GERequestOperator {
 	public static final String ORDER_DESCENDENCE = "DESC";
 	
 	//LIMITs
+
+	//BOOLEAN
+	public static final String VALUE_TRUE = "1";
+	public static final String VALUE_FALSE = "0";
 	
 	/** Attribute to apply operation **/
 	public String attribute;

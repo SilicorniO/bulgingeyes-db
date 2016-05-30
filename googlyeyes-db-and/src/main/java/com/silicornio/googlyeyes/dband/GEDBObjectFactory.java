@@ -350,7 +350,13 @@ public class GEDBObjectFactory {
         //check if the model has a JSON attribute to return it
         GEModelObjectAttribute attrObjectJson = GEModelFactory.findAttributeObjectJson(modelObject);
         if(attrObjectJson!=null){
-            return gson.fromJson((String)result.get(attrObjectJson.name), objectClass);
+            try {
+                return gson.fromJson((String) result.get(attrObjectJson.name), objectClass);
+            }catch(Exception e){
+                GEL.e("Someone touched this registry in the database: Exception converting from JSON: " + e.toString());
+                return null;
+            }
+
         }else {
 
             //convert response date values to a Date object

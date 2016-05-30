@@ -11,6 +11,8 @@ public class GEMessage {
 
     private String tag;
 
+    private boolean checkBoolean;
+
     private int numViews;
 
     private Calendar messageDate;
@@ -60,6 +62,14 @@ public class GEMessage {
 
     public void setText(GEMessageText text) {
         this.text = text;
+    }
+
+    public boolean isCheckBoolean() {
+        return checkBoolean;
+    }
+
+    public void setCheckBoolean(boolean checkBoolean) {
+        this.checkBoolean = checkBoolean;
     }
 
     @Override

@@ -16,6 +16,7 @@ import com.silicornio.googlyeyes.dband.general.GEDBUtils;
 import com.silicornio.googlyeyes.dband.GEModelConf;
 import com.silicornio.googlyeyes.dband.GEModelFactory;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessage;
+import com.silicornio.googlyeyes.dbandexample.model.GEMessageEncrypt;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessageText;
 
 import org.junit.Before;
@@ -116,6 +117,57 @@ public class GooglyEyesTests {
 
         //get the object and should be null
         assertNull(GEDBObjectFactory.getOneObject(mDbController, GEMessage.class, "title1"));
+    }
+
+    @Test
+    public void test005InsertAndSelectBoolean(){
+
+        //generate objects to use in tests
+        GEMessage message = new GEMessage("title1", null);
+        message.setCheckBoolean(true);
+
+        //add object
+        GEMessage messageDb = GEDBObjectFactory.addObject(mDbController, message);
+
+        //check the boolean
+        assertTrue(messageDb.isCheckBoolean());
+    }
+
+    @Test
+    public void test006SelectBoolean(){
+
+        //generate objects to use in tests
+        GEMessage message = new GEMessage("title1", null);
+        message.setCheckBoolean(true);
+
+        //add object
+        GEDBObjectFactory.addObject(mDbController, message);
+
+        //get the object
+        GERequest request = new GERequest(GERequest.TYPE_GET, "GEMessage");
+        request.operators.add(new GERequestOperator("checkBoolean", "=", GERequestOperator.VALUE_TRUE));
+        GEResponse response = mDbController.request(request);
+
+        //get the object and should be null
+        assertTrue(((Boolean)response.result.get("checkBoolean")).booleanValue());
+    }
+
+    @Test
+    public void test007Encrypt(){
+
+        //generate objects to use in tests
+        GEMessageEncrypt message = new GEMessageEncrypt("title007");
+
+        //add object
+        GEDBObjectFactory.addObject(mDbController, message);
+
+        //get the object
+        GERequest request = new GERequest(GERequest.TYPE_GET, "GEMessageEncrypt");
+        request.operators.add(new GERequestOperator("title", "=", "title007"));
+        GEResponse response = mDbController.request(request);
+
+        //get the object and should be null
+        assertEquals(response.result.get("title"), "title007");
     }
 
     //----- END OBJECTS TESTS -----

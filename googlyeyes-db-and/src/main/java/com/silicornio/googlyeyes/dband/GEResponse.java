@@ -1,5 +1,7 @@
 package com.silicornio.googlyeyes.dband;
 
+import com.silicornio.googlyeyes.dband.general.GECryptLib;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,9 +49,35 @@ public class GEResponse {
 	//----- ADDITIONAL -----
 
 	public void clean(){
-		if(numResults==1){
+		if(results.size()==1){
 			result = results.get(0);
 			results.clear();
+		}
+	}
+
+	/**
+	 * Apply decryption to all fields of this response
+	 * @param objects GEModelObject[] array of model objects
+	 * @param request GERequest to get model information
+	 * @param cryptLib GECryptLib to use for encrypting
+     */
+	public void applyDecryption(GEModelObject[] objects, GERequest request, GECryptLib cryptLib){
+
+		//get the model
+		GEModelObject mObject = GEModelFactory.findObject(request.modelObject, objects);
+		if(mObject==null){
+			return;
+		}
+
+		//for each operator, check if the attribute has to be encrypted
+		for(Map<String, Object> result : results){
+			for(GEModelObjectAttribute moa : mObject.attributes){
+				if(moa.encrypt!=null && result.get(moa.name)!=null && result.get(moa.name) instanceof String){
+					if(moa.encrypt.equalsIgnoreCase(GEModelObjectAttribute.ENCRYPT_DEFAULT)){
+						result.put(moa.name, cryptLib.decrypt((String)result.get(moa.name)));
+					}
+				}
+			}
 		}
 	}
 }

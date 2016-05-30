@@ -150,6 +150,9 @@ public class SQLiteDBStGenerator {
 				return "INT";
 			}
 
+		}else if(type.equalsIgnoreCase(GEModelObjectAttribute.TYPE_BOOLEAN)){
+			return "INT(1)";
+
 		}else if(type.equalsIgnoreCase(GEModelObjectAttribute.TYPE_DOUBLE)){
 			if(length>0){
 				return "DOUBLE(" + length + ")";
@@ -223,19 +226,21 @@ public class SQLiteDBStGenerator {
                     //value
                     if (moa.isObjectType() && request.value.get(key) instanceof Map) {
 
-                        //get identifier of the object type
-                        GEModelObjectAttribute moaRef = null;
-                        GEModelObject moRef = GEModelFactory.findObject(moa.type, modelObjects);
-                        if (moRef != null) {
-                            moaRef = GEModelFactory.findAttributeId(moRef);
-                        }
-                        if (moaRef != null && ((Map) request.value.get(key)).get(moaRef.name)!=null) {
-                            sValues += "'" + ((Map) request.value.get(key)).get(moaRef.name).toString() + "'";
-                        } else {
-                            GEL.e("It was impossible to find the ID attribute of the model requested for '" + modelObject.name + "' or is null the attribute '" + moa.name + "'");
-                            sValues += "null";
-                        }
+						//get identifier of the object type
+						GEModelObjectAttribute moaRef = null;
+						GEModelObject moRef = GEModelFactory.findObject(moa.type, modelObjects);
+						if (moRef != null) {
+							moaRef = GEModelFactory.findAttributeId(moRef);
+						}
+						if (moaRef != null && ((Map) request.value.get(key)).get(moaRef.name) != null) {
+							sValues += "'" + ((Map) request.value.get(key)).get(moaRef.name).toString() + "'";
+						} else {
+							GEL.e("It was impossible to find the ID attribute of the model requested for '" + modelObject.name + "' or is null the attribute '" + moa.name + "'");
+							sValues += "null";
+						}
 
+					} else if(moa.type.equalsIgnoreCase(GEModelObjectAttribute.TYPE_BOOLEAN)){
+						sValues += "'" + (request.value.get(key).equals(Boolean.TRUE) || request.value.get(key).equals("true")? 1 : 0) + "'";
                     } else {
                         sValues += "'" + request.value.get(key) + "'";
                     }

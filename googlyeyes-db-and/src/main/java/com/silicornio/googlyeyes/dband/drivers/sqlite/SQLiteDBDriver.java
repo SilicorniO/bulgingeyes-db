@@ -288,17 +288,22 @@ public class SQLiteDBDriver implements DBDriver {
                                 for (int i=0; i<models.length; i++) {
                                     maps[i] = rowToMap(cursor, numColumnsRead, numColumnsRead + models[i].attributes.length);
                                     numColumnsRead += models[i].attributes.length;
+
+									//convert boolean to its type
+									convertBooleanTypesInMap(maps[i], models[i]);
                                 }
 
                                 response.results.add(joinMapModels(0, maps, models));
 
                             }else{
-                                response.results.add(rowToMap(cursor, 0, cursor.getColumnCount()));
+								Map<String, Object> map = rowToMap(cursor, 0, cursor.getColumnCount());
+
+								//convert boolean to its type
+								convertBooleanTypesInMap(map, models[0]);
+
+                                response.results.add(map);
                             }
 						}
-
-						//change from the list to the object if there is only one
-						response.clean();
 
 					} catch (Exception e) {
 						GEL.e("ERROR converting query result to response: " + e.toString());
@@ -392,6 +397,21 @@ public class SQLiteDBDriver implements DBDriver {
         //return the map
         return map;
     }
+
+	/**
+	 * Convert the boolean types of the map to boolean object
+	 * @param map Map<String, Object> generated for this object
+	 * @param model GEModelObject to get attributes
+     */
+	private void convertBooleanTypesInMap(Map<String, Object> map, GEModelObject model){
+		//convert boolean to its type
+		for(int n=0; n<model.attributes.length; n++){
+			if(model.attributes[n].type.equalsIgnoreCase(GEModelObjectAttribute.TYPE_BOOLEAN) &&
+					map.get(model.attributes[n].name)!=null){
+				map.put(model.attributes[n].name, Boolean.valueOf(map.get(model.attributes[n].name).equals(Integer.valueOf(1))));
+			}
+		}
+	}
 	
 	/**
 	 * Generate and execute an insert with the request received
@@ -422,7 +442,7 @@ public class SQLiteDBDriver implements DBDriver {
 
                     //get the identifier of the response and set it to the value
                     if(responseRef!=null && responseRef.numResults==1){
-                        request.value.put(moa.name, responseRef.result.get(moaRef.name));
+                        request.value.put(moa.name, responseRef.results.get(0).get(moaRef.name));
                     }
                 }
             }
@@ -558,9 +578,6 @@ public class SQLiteDBDriver implements DBDriver {
 							response.results.add(rowToMap(cursor, 0, cursor.getColumnCount()));
 						}
 
-						//change from the list to the object if there is only one
-						response.clean();
-
 					} catch (Exception e) {
 						GEL.e("ERROR converting query result to response: " + e.toString());
 						return false;
@@ -610,7 +627,7 @@ public class SQLiteDBDriver implements DBDriver {
      */
     private static Object getCursorValue(Cursor cursor, int index){
         switch(cursor.getType(index)){
-            case Cursor.FIELD_TYPE_INTEGER: return Integer.valueOf(cursor.getInt(index));
+			case Cursor.FIELD_TYPE_INTEGER: return Integer.valueOf(cursor.getInt(index));
             case Cursor.FIELD_TYPE_FLOAT: return Float.valueOf(cursor.getFloat(index));
             case Cursor.FIELD_TYPE_STRING: return cursor.getString(index);
             case Cursor.FIELD_TYPE_BLOB: return cursor.getBlob(index);

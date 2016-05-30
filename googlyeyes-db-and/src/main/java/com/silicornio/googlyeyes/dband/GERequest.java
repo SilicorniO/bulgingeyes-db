@@ -51,9 +51,9 @@ public class GERequest {
 	/**
 	 * Apply encryption to the attributes of the request that needs it
 	 * @param objects ModelObject[] Array of objects where to search the model associated to this request
-	 * @param password String to use for encrypting
+	 * @param cryptLib GECryptLib to use for encrypting
 	 */
-	public void applyEncryption(GEModelObject[] objects, String password){
+	public void applyEncryption(GEModelObject[] objects, GECryptLib cryptLib){
 				
 		//get the model
 		GEModelObject mObject = GEModelFactory.findObject(modelObject, objects);
@@ -65,7 +65,7 @@ public class GERequest {
 		if(value!=null){
 			for(String key : value.keySet()){
 				if(value.get(key) instanceof String){
-					String valueEncrypted = getValueEncrypted(key, (String)value.get(key), password, mObject.attributes);
+					String valueEncrypted = getValueEncrypted(key, (String)value.get(key), cryptLib, mObject.attributes);
 					if(valueEncrypted!=null){
 						value.put(key, valueEncrypted);
 					}
@@ -76,7 +76,7 @@ public class GERequest {
 		//check operators
 		if(operators!=null){
 			for(GERequestOperator op : operators){
-				String valueEncrypted = getValueEncrypted(op.attribute, op.value, password, mObject.attributes);
+				String valueEncrypted = getValueEncrypted(op.attribute, op.value, cryptLib, mObject.attributes);
 				if(valueEncrypted!=null){
 					op.value = valueEncrypted;
 				}
@@ -88,11 +88,11 @@ public class GERequest {
 	 * Get the value with encryption if it is found and has encryption enabled
 	 * @param attrName String name of the attribute to search in the list of attributes of the model
 	 * @param value String value to encrypt
-	 * @param password String to use for encruption
+	 * @param cryptLib GECryptLib to use for encrypting
 	 * @param attributes ModelObjectAttribute[] Array of attributes of the model where the attrName should be found
 	 * @return String value encrypted or NULL if not necessary encryption or not found
 	 */
-	private static String getValueEncrypted(String attrName, String value, String password, GEModelObjectAttribute[] attributes){
+	private static String getValueEncrypted(String attrName, String value, GECryptLib cryptLib, GEModelObjectAttribute[] attributes){
 		
 		//check values are right
 		if(attrName==null || value==null){
@@ -104,8 +104,7 @@ public class GERequest {
 				if(attr.encrypt!=null && attr.encrypt.equalsIgnoreCase(GEModelObjectAttribute.ENCRYPT_DEFAULT)){
 					
 					//encrypt value 
-					return GECryptLib.encrypt(value, password);
-					
+					return cryptLib.encrypt(value);
 				}
 				
 				//it was found but not necessary encryption

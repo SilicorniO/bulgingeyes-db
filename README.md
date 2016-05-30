@@ -5,6 +5,7 @@ ORM Database for Android. Only SQLite connections are allowed at the moment. It 
  * Create and modify the structure of a database
  * Execute requests: Raw and simple requests
  * ObjectRequest factory: It allows to make requests directly with objects, as ORM.
+ * Encryption of fields
 
 ##Installation
 
@@ -20,7 +21,7 @@ In your `build.gradle` you should declare the jCenter repository into `repositor
 ```
 Include the library as dependency:
 ```gradle
-compile 'com.silicornio:googlyeyes-db-and:1.1.1'
+compile 'com.silicornio:googlyeyes-db-and:1.2.0'
 ```
 
 ### For Maven users
@@ -29,7 +30,7 @@ compile 'com.silicornio:googlyeyes-db-and:1.1.1'
 <dependency>
   <groupId>com.silicornio</groupId>
   <artifactId>googlyeyes-db-and</artifactId>
-  <version>1.1.1</version>
+  <version>1.2.0</version>
   <type>pom</type>
 </dependency>
 ```
@@ -42,13 +43,15 @@ compile 'com.silicornio:googlyeyes-db-and:1.1.1'
     {
     	"driver": "SQLite",
     	"name": "test_system_db",
-    	"version": 1
+    	"version": 1,
+		"encryptKey": "your_password"
     }
     ```
       
   * driver - Type of database (SQLite only supported for the moment)
   * name - Name of the database
   * version - Version of the database
+  * encryptKey - Password to use for encryption, AES256. This password should be added by code because it is very easy to read assets in Android
 
 2. Create your own model file:
 
@@ -74,6 +77,12 @@ compile 'com.silicornio:googlyeyes-db-and:1.1.1'
     					"mandatory": true,
     					"unique": true,
     					"defaultValue": ""
+    				},					
+    				{
+    					"name": "data",
+    					"type": "string",
+    					"objectJson": true,
+    					"encrypt": "default"
     				}
     			],
     			"dbAction": "CREATE"
@@ -93,6 +102,8 @@ compile 'com.silicornio:googlyeyes-db-and:1.1.1'
   * attribute.mandatory - Indicates if it is mandatory to include the value for this attribute in each insert
   * attribute.unique - Indicates if this attribute should be unique
   * attribute.defaultValue - Value to set by default when an object is inserted
+  * attribute.objectJson - This attribute stores a JSON of the object saved. If model has got a variable with objectJson is used to fill the object when a request is made. It only works using GEDBObjectFactory.
+  * attribute.encrypt - Type of encryption to use. Default: AES 256, this is the only one at the moment. Only the fields with this attribute are encrypted.
   * dbAction - Permission to modify the database: 'CREATE', 'UPDATE', 'DELETE'
 
 3. Add the files to the assets folder of the project

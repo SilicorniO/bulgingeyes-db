@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.silicornio.googlyeyes.dband.drivers.DBDriver;
 import com.silicornio.googlyeyes.dband.drivers.sqlite.SQLiteDBDriver;
+import com.silicornio.googlyeyes.dband.general.GECryptLib;
 import com.silicornio.googlyeyes.dband.general.GEDBUtils;
 import com.silicornio.googlyeyes.dband.general.GEL;
 
@@ -19,6 +20,9 @@ public class GEDBController {
 	/** Driver to connect to database **/
 	private DBDriver dbDriver;
 
+	/** Cryptography class **/
+	private GECryptLib mCryptLib;
+
 	public GEDBController(GEDbConf dbConf, GEModelConf modelConf){
 
 		if(dbConf==null || modelConf==null){
@@ -28,6 +32,15 @@ public class GEDBController {
 		//save data
 		mDbConf = dbConf;
 		mModelConf = modelConf;
+
+		//generate a cryptolib if password is received
+		if(mDbConf.encryptKey!=null && mDbConf.encryptKey.length()>0){
+			try {
+				mCryptLib = new GECryptLib(mDbConf.encryptKey);
+			}catch (Exception e){
+				GEL.e("Encryption not supported: " + e.toString());
+			}
+		}
 	}
 
     /**
@@ -100,8 +113,8 @@ public class GEDBController {
 		}
 		
 		//apply encryption
-		if(mDbConf.encryptKey!=null){
-			request.applyEncryption(mModelConf.objects, mDbConf.encryptKey);
+		if(mCryptLib!=null){
+			request.applyEncryption(mModelConf.objects, mCryptLib);
 		}
 		
 		if(dbDriver!=null){
@@ -109,6 +122,13 @@ public class GEDBController {
 			GEResponse response = dbDriver.request(request);
 			GEL.i("Request executed in " + GEDBUtils.endCounter("request") + " ms");
 			if(response!=null){
+				if(mCryptLib!=null) {
+					response.applyDecryption(mModelConf.objects, request, mCryptLib);
+				}
+
+				//change from the list to the object if there is only one
+				response.clean();
+
 				return response;
 			}else{
 				return GEResponse.generateInfo("There was an error executing the request");
