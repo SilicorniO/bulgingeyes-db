@@ -114,7 +114,9 @@ public class GEDBController {
 		
 		//apply encryption
 		if(mCryptLib!=null){
-			request.applyEncryption(mModelConf.objects, mCryptLib);
+			synchronized (mCryptLib) {
+				request.applyEncryption(mModelConf.objects, mCryptLib);
+			}
 		}
 		
 		if(dbDriver!=null){
@@ -123,7 +125,9 @@ public class GEDBController {
 			GEL.i("Request executed in " + GEDBUtils.endCounter("request") + " ms");
 			if(response!=null){
 				if(mCryptLib!=null) {
-					response.applyDecryption(mModelConf.objects, request, mCryptLib);
+					synchronized (mCryptLib) {
+						response.applyDecryption(mModelConf.objects, request, mCryptLib);
+					}
 				}
 
 				//change from the list to the object if there is only one

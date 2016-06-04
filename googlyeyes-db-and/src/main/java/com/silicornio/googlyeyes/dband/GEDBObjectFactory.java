@@ -3,6 +3,8 @@ package com.silicornio.googlyeyes.dband;
 import android.util.Pair;
 
 import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
+import com.silicornio.googlyeyes.dband.general.GEDBUtils;
 import com.silicornio.googlyeyes.dband.general.GEL;
 import com.silicornio.googlyeyes.dband.general.GEReflectionUtils;
 import com.silicornio.quepotranslator.QPCustomTranslation;
@@ -153,6 +155,9 @@ public class GEDBObjectFactory {
         }
 
         GERequest request = GERequestFactory.addObject(object.getClass().getSimpleName(), object, dbController.getModelConf().objects);
+        if(request==null){
+            return null;
+        }
         request.nestedObjects = true;
         GEResponse response = dbController.request(request);
         return getOneObjectResponse(response, GEModelFactory.findObject(object.getClass().getSimpleName(), dbController.getModelConf().objects), (Class<T>) object.getClass(), dbController);
@@ -334,9 +339,6 @@ public class GEDBObjectFactory {
      */
     public static <T>T getOneObjectResponse(GEResponse response, GEModelObject modelObject, Class<T> objectClass, GEDBController dbController){
 
-        //Prepare Gson to write and read JSON
-        Gson gson = new Gson();
-
         //convert the response to an object
         Map<String, Object> result;
         if(response.numResults==1) {
@@ -349,15 +351,18 @@ public class GEDBObjectFactory {
 
         //check if the model has a JSON attribute to return it
         GEModelObjectAttribute attrObjectJson = GEModelFactory.findAttributeObjectJson(modelObject);
-        if(attrObjectJson!=null){
+        if(attrObjectJson!=null && result.get(attrObjectJson.name)!=null){
+
+            //convert json to object
             try {
+                Gson gson = new Gson();
                 return gson.fromJson((String) result.get(attrObjectJson.name), objectClass);
             }catch(Exception e){
                 GEL.e("Someone touched this registry in the database: Exception converting from JSON: " + e.toString());
                 return null;
             }
 
-        }else {
+        }else{
 
             //convert response date values to a Date object
             GEResponseFactory.convertStringDatesToObject(modelObject, result, dbController.getModelConf().objects);
@@ -378,9 +383,6 @@ public class GEDBObjectFactory {
      */
     public static <T>List<T> getObjectsResponse(GEResponse response, GEModelObject modelObject, Class<T> objectClass, GEDBController dbController){
 
-        //Prepare Gson to write and read JSON
-        Gson gson = new Gson();
-
         //list of objects to return
         List<T> listResults = new ArrayList<>();
 
@@ -398,19 +400,53 @@ public class GEDBObjectFactory {
         GEModelObjectAttribute attrObjectJson = GEModelFactory.findAttributeObjectJson(modelObject);
 
         //generate the list of objects
+        Gson gson = new Gson();
         QPTransManager manager = new QPTransManager(null);
+        manager.addCustomTranslation(mCustomTranslationDate);
         for(Map<String, Object> result : results){
 
-            //convert response date values to a Date object
-            GEResponseFactory.convertStringDatesToObject(modelObject, result, dbController.getModelConf().objects);
+            //check if the model has a JSON attribute to return it
+            if(attrObjectJson!=null && result.get(attrObjectJson.name)!=null){
 
-            if(attrObjectJson!=null){
-                listResults.add(gson.fromJson((String)result.get(attrObjectJson.name), objectClass));
+                //convert json data into a map
+                try{
+                    listResults.add(gson.fromJson((String)result.get(attrObjectJson.name), objectClass));
+                }catch(Exception e){
+                    GEL.e("Someone touched this registry in the database: Exception converting from JSON: " + e.toString());
+                    return null;
+                }
+
             }else{
+
+                //convert response date values to a Date object
+                GEResponseFactory.convertStringDatesToObject(modelObject, result, dbController.getModelConf().objects);
+
                 listResults.add(manager.translate(result, objectClass));
             }
         }
         return listResults;
+    }
+
+    /**
+     * Apply JSON attribute to the map received
+     * @param attrObjectJson GEModelObjectAttribute attribute to apply
+     * @param map Map<String, Object> received
+     */
+    private static void applyJsonAttribute(GEModelObjectAttribute attrObjectJson, Map<String, Object> map){
+
+        if(attrObjectJson!=null && map.get(attrObjectJson.name)!=null){
+
+            //convert json data into a map
+            String sJson = (String) map.get(attrObjectJson.name);
+            Gson gson = new Gson();
+            Map<String, Object> mapJson = gson.fromJson(sJson, LinkedTreeMap.class);
+
+            //replace all values received in the object JSON
+            GEDBUtils.mergeMaps(mapJson, map, false);
+
+            //remove JSON attribute from result
+            map.remove(attrObjectJson.name);
+        }
     }
 
 

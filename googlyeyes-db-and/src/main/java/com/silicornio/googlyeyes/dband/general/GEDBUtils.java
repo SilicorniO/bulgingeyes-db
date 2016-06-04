@@ -107,4 +107,38 @@ public class GEDBUtils {
         }
 
     }
+
+
+    /**
+     * Merge two maps, adding the values from origin to destiny
+     * @param mapOrigin Map<String, Object> to get the values
+     * @param mapDestiny Map<String, Object> where to set the values
+     * @param override boolean TRUE override values, FALSE not
+     */
+    public static void mergeMaps(Map<String, Object> mapOrigin, Map<String, Object> mapDestiny, boolean override){
+
+        //if one of the maps is null we don't do nothing
+        if(mapOrigin==null || mapDestiny==null){
+            return;
+        }
+
+        //for each value set the origin value
+        for(Map.Entry<String, Object> entry : mapOrigin.entrySet()){
+
+            //if value doesn't exists or override we set the value
+            if(!mapDestiny.containsKey(entry.getKey()) || override) {
+
+                Object oOrig = entry.getValue();
+                Object oDest = mapDestiny.get(entry.getKey());
+
+                //if both values are map we merge the maps
+                if((oOrig instanceof Map) && (oDest instanceof Map)){
+                    mergeMaps((Map)oOrig, (Map)oDest, override);
+                }else{
+                    mapDestiny.put(entry.getKey(), oOrig);
+                }
+            }
+        }
+
+    }
 }

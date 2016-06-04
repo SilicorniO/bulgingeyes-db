@@ -9,13 +9,14 @@ import android.test.suitebuilder.annotation.SmallTest;
 import com.silicornio.googlyeyes.dband.GEDBController;
 import com.silicornio.googlyeyes.dband.GEDBObjectFactory;
 import com.silicornio.googlyeyes.dband.GEDbConf;
+import com.silicornio.googlyeyes.dband.GEModelConf;
+import com.silicornio.googlyeyes.dband.GEModelFactory;
 import com.silicornio.googlyeyes.dband.GERequest;
 import com.silicornio.googlyeyes.dband.GERequestOperator;
 import com.silicornio.googlyeyes.dband.GEResponse;
 import com.silicornio.googlyeyes.dband.general.GEDBUtils;
-import com.silicornio.googlyeyes.dband.GEModelConf;
-import com.silicornio.googlyeyes.dband.GEModelFactory;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessage;
+import com.silicornio.googlyeyes.dbandexample.model.GEMessageData;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessageEncrypt;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessageText;
 
@@ -168,6 +169,28 @@ public class GooglyEyesTests {
 
         //get the object and should be null
         assertEquals(response.result.get("title"), "title007");
+    }
+
+    @Test
+    public void test008JsonDataUpdateId(){
+
+        GEMessageData messageData = new GEMessageData("msg1");
+        messageData.setTag("tag1");
+
+        //add object
+        GEMessageData messageDataAdd = GEDBObjectFactory.addObject(mDbController, messageData);
+
+        //change identifier
+        GERequest request = new GERequest(GERequest.TYPE_UPDATE, GEMessageData.class.getSimpleName());
+        request.operators.add(new GERequestOperator("title", "=", "msg1"));
+        request.value.put("title", "msg2");
+        mDbController.request(request);
+
+        //get the same data with the new identifier
+        GEMessageData messageDataGet2 = GEDBObjectFactory.getOneObject(mDbController, GEMessageData.class, "msg2");
+
+        //get the object and should be null
+        assertEquals(messageDataGet2.getTag(), "tag1");
     }
 
     //----- END OBJECTS TESTS -----

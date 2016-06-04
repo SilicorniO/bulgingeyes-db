@@ -7,13 +7,9 @@ import com.silicornio.googlyeyes.dband.GEDBController;
 import com.silicornio.googlyeyes.dband.GEDBObjectFactory;
 import com.silicornio.googlyeyes.dband.GEDbConf;
 import com.silicornio.googlyeyes.dband.GEModelConf;
-import com.silicornio.googlyeyes.dband.GERequest;
-import com.silicornio.googlyeyes.dband.GERequestOperator;
-import com.silicornio.googlyeyes.dband.GEResponse;
 import com.silicornio.googlyeyes.dband.general.GEDBUtils;
 import com.silicornio.googlyeyes.dband.general.GEL;
-import com.silicornio.googlyeyes.dbandexample.model.GEMessage;
-import com.silicornio.googlyeyes.dbandexample.model.GEMessageEncrypt;
+import com.silicornio.googlyeyes.dbandexample.model.GEMessageData;
 import com.silicornio.googlyeyes.dbandexample.model.GEMessageText;
 import com.silicornio.quepotranslator.general.QPL;
 
@@ -44,23 +40,25 @@ public class MainActivity extends AppCompatActivity {
 
         //-----
 
-        GEMessageText messageTest = new GEMessageText("message");
-        GEMessage message = new GEMessage("title1", null);
-        message.setCheckBoolean(true);
+        GEMessageData messageData = new GEMessageData("msg1");
+        messageData.setTag("tag1");
+        messageData.setState(1);
+
+        GEMessageText messageData2 = new GEMessageText("msg2");
+        messageData.setData(messageData2);
+
+//        GEMessageText messageData3 = new GEMessageData("msg3");
+//        messageData2.setData(messageData3);
 
         //add object
-        GEMessage messageAdd = GEDBObjectFactory.addObject(mDbController, message);
+        GEMessageData messageDataAdd = GEDBObjectFactory.addObject(mDbController, messageData);
+        GEL.d("MessageAdd: " + messageDataAdd.toString());
 
-        GEMessageEncrypt messageEncrypt = new GEMessageEncrypt("title1");
-        GEDBObjectFactory.addObject(mDbController, messageEncrypt);
+        messageData.setState(2);
 
-        //get object
-        GERequest request = new GERequest(GERequest.TYPE_GET, "GEMessage");
-        request.operators.add(new GERequestOperator("checkBoolean", "=", GERequestOperator.VALUE_TRUE));
+        GEMessageData messageDataUpdate = GEDBObjectFactory.updateObject(mDbController, messageData);
+        GEL.d("MessageUpdate: " + messageDataUpdate.toString());
 
-        GEResponse response = mDbController.request(request);
-
-        GEL.d("MessageAdd: " + response.toString());
 
         //-----
 
